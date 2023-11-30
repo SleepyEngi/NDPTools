@@ -5,7 +5,7 @@
 
 # ================================================================================
 # Download instructions
-# 1. You can find the latest version of this addon at [GITHUB LINK HERE]
+# 1. You can find the latest version of this addon at https://github.com/SleepyEngi/NDPTools
 # 2. Go to the green "<> Code" button
 # 3. Click "Download ZIP"
 
@@ -53,7 +53,8 @@
 
 # ================================================================================
 # Contact me
-# You can 
+# You can find me on discord as "ndp"
+# You can join my discord server at [Doesnt exist] 
 
 # ================================================================================
 # Support me
