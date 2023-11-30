@@ -24,7 +24,7 @@ from bpy.types import Panel
 import logging
 
 # import the functions
-
+from .plugin import ndpt_functions
 
 # --------------------------------------------------------------------------------
 # Operators
@@ -50,7 +50,11 @@ class NDPT_OT_ToggleShapeKeys(bpy.types.Operator):
         logging.info(f"toggling shape keys")
         logging.info(f"settings:")
         logging.info(f"toggle individually: {context.scene.NDPT_OT_ToggleShapeKeys_ToggleAll}")
-
+        
+        # Run the function
+        result = ndpt_functions.toggle_shape_keys(toggleindividual = context.scene.NDPT_OT_ToggleShapeKeys_ToggleAll)
+        self.report({'INFO'},str(result))
+        
         return {'FINISHED'}
 
 
