@@ -196,6 +196,10 @@ class NDPT_OT_ConvertScaleToLocation(bpy.types.Operator):
         # Log settings
         self.report({'INFO'},f"Converting scale to location")
         logging.info(f"converting scale to location")
+        
+        # Run the function
+        result = ndpt_functions.convert_scale_to_loc()
+        self.report({'INFO'},str(result))
 
         return {'FINISHED'}
 

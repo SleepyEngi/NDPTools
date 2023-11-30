@@ -108,3 +108,99 @@ def apply_armature_modifiers(**kwargs):
     bpy.ops.object.mode_set(mode=original_mode)
     msgs.append(f"Finished applying armature modifiers")
     return msgs
+
+
+# Converts scale transforms into location transforms
+def convert_scale_to_loc():
+    """Automatically convert scaled bones into equivalent visual location transforms"""
+    # Initiate logging
+    msgs = []
+    logging.info(f"converting scale transforms to visual location")
+    
+    # Check if there is an active object
+    if not bpy.context.active_object:
+        msgs.append("No active object")
+        return msgs
+    
+    # Check if the active object is a valid armature
+    if bpy.context.active_object.type != 'ARMATURE':
+        # Object is not an armature. Cancelling.
+        msgs.append(f"No armature selected.")
+        return msgs
+    
+    # Store current mode
+    original_mode = bpy.context.mode
+    # For some reason it doesn't recognize edit_armature as a valid mode to switch to so we change it to just edit. Blender moment
+    if original_mode == 'EDIT_ARMATURE':
+        original_mode = 'EDIT'
+    #Set to pose mode
+    bpy.ops.object.mode_set(mode='POSE')
+
+    # Get the armature
+    armature = bpy.context.object
+    logging.info(f"armature: {armature.name}")
+    
+    # Initiate logging variable
+    editnumber = 0
+    
+    # Initiate list of any bones that are not at their armaturespace rest location
+    posebone_list = []
+    posebone_data = {}
+    
+    # We get a list of all bones not in their rest positions in armaturespace
+    for p_bone in armature.pose.bones:
+        
+        posebone_rotation = p_bone.rotation_quaternion.copy()
+        
+        p_bone.rotation_quaternion = (1,0,0,0)
+        bpy.context.view_layer.update()
+        
+        #We copy all data in case we need parent data
+        posebone_data[p_bone] = [p_bone.bone.head_local.copy(),p_bone.head.copy(),p_bone.location.copy(),posebone_rotation]
+        posebone_list.append(p_bone)
+        logging.info(f"{p_bone.name} rest pos: {p_bone.bone.head_local}")
+        logging.info(f"{p_bone.name} pose pos: {p_bone.head}")
+            
+    
+    #Clear scale of all bones
+    for p_bone in armature.pose.bones:
+        p_bone.scale = (1,1,1)
+        p_bone.location = (0,0,0)
+        
+    
+    #Clear scale and set location
+    logging.info(f"Setting location of pose bones:")
+    for p_bone in posebone_list:
+        logging.info(f"posed bone: {p_bone}")
+        # Update positions
+        bpy.context.view_layer.update()
+        
+        if p_bone.parent != None:
+            # Bone_rest offset from Parent_rest
+            rest_offset = posebone_data[p_bone][0] - posebone_data[p_bone.parent][0]
+            
+            # Bone_pose offset from Parent_pose
+            pose_offset = posebone_data[p_bone][1] - posebone_data[p_bone.parent][1]
+        
+            calc_offset = pose_offset - rest_offset
+        
+            p_bone.matrix.translation = p_bone.matrix.translation + calc_offset
+        
+        else:
+            p_bone.matrix.translation = p_bone.matrix.translation + (posebone_data[p_bone][1] - posebone_data[p_bone][0])
+        
+        editnumber = editnumber + 1
+    
+    for p_bone in posebone_list:
+        p_bone.rotation_quaternion = posebone_data[p_bone][3]
+        
+    
+    if editnumber > 0:
+        msgs.append(f"Moved {editnumber} bones to their visual locations and reset scales")
+    else:
+        msgs.append(f"No bones required movement.")
+    
+    #Return to original mode
+    bpy.ops.object.mode_set(mode=original_mode)
+    
+    return msgs
