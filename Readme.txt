@@ -1,7 +1,7 @@
 NDPTools Blender Addon by NDP
 This is my addon for varied utility buttons
-Version 0.0.1
-2023-11-30
+Version: 0.0.1
+YYYY-MM-DD: 2023-11-30
 =========================================================================================================
 Download instructions
 1. You can find the latest version of this addon at https://github.com/SleepyEngi/NDPTools
@@ -54,17 +54,18 @@ Author's notes
 - Feel free to contribute to the github page.
 - Feel free to fork, modify and or use this addon as a template for whatever.
 - Please credit me if you use code from my addon
+- Don't feed this to an AI (Of course bots will anyway but I just wanted to make it illegal lmao)
 - Please do not resell this addon 
 - Feel free to ask me any questions
 - Feel free to suggest new features or settings if it's something simple that could be automated
 =========================================================================================================
 Reporting bugs
-You can report bugs on the same github page, bug reports are appreciated.
-If you want a more inmediate response, find me on discord on the contact me section.
+You can write a bug report at https://github.com/SleepyEngi/NDPTools/issues/new
+You can also message me on discord for a more inmediate response, see the contact me section.
 =========================================================================================================
 Contact me
 You can find me on discord as "ndp"
-You can join my discord server at [Doesnt exist] 
+You can join my discord server at [Doesnt exist] for support and more 3D resources
 =========================================================================================================
 Support me
 If you're well off and can spare a dime, donations are very appreciated at https://ko-fi.com/ndpdesigns

@@ -23,7 +23,7 @@ def toggle_shape_keys(**kwargs):
         return msgs
     
     # Check that object has shape keys
-    if object.data.shape_keys == False:
+    if not object.data.shape_keys:
         msgs.append("Active object has no shape keys")
         return msgs
     
@@ -38,6 +38,34 @@ def toggle_shape_keys(**kwargs):
     
     msgs.append("Toggled shape keys")
     return msgs
+
+
+# Function to rename data blocks to their objects name
+def sync_data_block_names():
+    return "WIP"
+
+
+# Function to remove duplicate node groups
+def merge_duplicate_node_groups():
+    return "WIP"
+
+
+# Function to convert particle systems to a curve object with automatically set surface, uv map, and node group
+def convert_particles_to_curves(**kwargs):
+    # Initiate logging
+    msgs = []
+    
+    # Get settings
+    nodegroupname = kwargs.get('nodegroupname', "Hair Preset")
+    attachmentuvmap = kwargs.get('attachmentuvmap', "UVMap")
+    attachcurves =  kwargs.get('attachcurves', True)
+    
+    return "WIP"
+
+
+# Function to convert curves back to a particle system and automatically make one if there  isn't one
+def convert_curves_to_particles():
+    return "WIP"
 
 
 # Function to apply all armature modifers of all children objects of an armature, and re-add them (Optional)
@@ -110,7 +138,7 @@ def apply_armature_modifiers(**kwargs):
     return msgs
 
 
-# Converts scale transforms into location transforms
+# Function to convert scale transforms into location transforms
 def convert_scale_to_loc():
     """Automatically convert scaled bones into equivalent visual location transforms"""
     # Initiate logging
@@ -204,3 +232,31 @@ def convert_scale_to_loc():
     bpy.ops.object.mode_set(mode=original_mode)
     
     return msgs
+
+
+# Function to select half of the vertices of a model
+def select_model_half(**kwargs):
+    # Initiate logging
+    msgs = []
+    
+    # Get settings
+    selectcenter = kwargs.get('selectcenter', False)
+    symmetryaxis = kwargs.get('symmetryaxis', "+X")
+    
+    return "WIP"
+
+
+# Function to select asymmetric vertices
+def select_asymmetrical_vertices(**kwargs):
+    # Initiate logging
+    msgs = []
+    
+    # Get settings
+    symmetryaxis = kwargs.get('symmetryaxis', "+X")
+    
+    return "WIP"
+
+
+# Function to select half of the vertices of a model
+def select_mergeable_vertices():
+    return "WIP"

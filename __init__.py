@@ -75,6 +75,10 @@ class NDPT_OT_SyncDataNames(bpy.types.Operator):
         # Log settings
         self.report({'INFO'},f"Synchronizing data block names")
         logging.info(f"synchronizing data block names")
+        
+        # Run the function
+        result = ndpt_functions.sync_data_block_names()
+        self.report({'INFO'},str(result))
 
         return {'FINISHED'}
 
@@ -96,6 +100,10 @@ class NDPT_OT_MergeDuplicateNodeGroups(bpy.types.Operator):
         # Log settings
         self.report({'INFO'},f"Merging duplicate node groups")
         logging.info(f"merging duplicate node groups")
+        
+        # Run the function
+        result = ndpt_functions.merge_duplicate_node_groups()
+        self.report({'INFO'},str(result))
 
         return {'FINISHED'}
 
@@ -121,6 +129,10 @@ class NDPT_OT_ConvertParticlesToCurves(bpy.types.Operator):
         logging.info(f"node group name: {context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup}")
         logging.info(f"attachment uv map: {context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap}")
         logging.info(f"attach curves: {context.scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves}")
+        
+        # Run the function
+        result = ndpt_functions.convert_particles_to_curves(nodegroupname = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup,attachmentuvmap = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap,attachcurves = context.scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves)
+        self.report({'INFO'},str(result))
 
         return {'FINISHED'}
 
@@ -141,7 +153,11 @@ class NDPT_OT_ConvertCurvesToParticles(bpy.types.Operator):
     def execute(self, context):
         self.report({'INFO'},f"Converting curves object into a particle system")
         logging.info(f"converting curves to particle system")
-
+        
+        # Run the function
+        result = ndpt_functions.convert_curves_to_particles()
+        self.report({'INFO'},str(result))
+        
         return {'FINISHED'}
 
 
@@ -224,6 +240,10 @@ class NDPT_OT_SelectHalf(bpy.types.Operator):
         logging.info(f"settings:")
         logging.info(f"select center: {context.scene.NDPT_OT_SelectHalf_SelectCenter}")
         logging.info(f"symmetry axis: {context.scene.NDPT_OT_SelectHalf_SymmetryAxis}")
+        
+        # Run the function
+        result = ndpt_functions.select_model_half(selectcenter = context.scene.NDPT_OT_SelectHalf_SelectCenter, symmetryaxis = context.scene.NDPT_OT_SelectHalf_SymmetryAxis)
+        self.report({'INFO'},str(result))
 
         return {'FINISHED'}
 
@@ -247,6 +267,10 @@ class  NDPT_OT_SelectAsymmetrical(bpy.types.Operator):
         logging.info(f"selecting assymetrical vertices")
         logging.info(f"settings:")
         logging.info(f"symmetry axis: {context.scene.NDPT_OT_SelectHalf_SymmetryAxis}")
+        
+        # Run the function
+        result = ndpt_functions.select_asymmetrical_vertices(symmetryaxis = context.scene.NDPT_OT_SelectHalf_SymmetryAxis)
+        self.report({'INFO'},str(result))
 
         return {'FINISHED'}
 
@@ -268,7 +292,11 @@ class  NDPT_OT_SelectMergeable(bpy.types.Operator):
         # Log settings
         self.report({'INFO'},f"Selecting mergeable vertices")
         logging.info(f"selecting mergeable vertices")
-
+        
+        # Run the function
+        result = ndpt_functions.select_mergeable_vertices()
+        self.report({'INFO'},str(result))
+        
         return {'FINISHED'}
 
 
