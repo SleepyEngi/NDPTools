@@ -65,10 +65,10 @@ class NDPT_OT_SyncDataNames(bpy.types.Operator):
     bl_label = "Rename data blocks to match object name"
     bl_options = {"REGISTER", "UNDO"}
     
-    # Only enable in object mode
+    # Enable button condition
     @classmethod
     def poll(cls, context):
-        return context.mode == "OBJECT"
+        return True
     
     # Button is pressed
     def execute(self, context):
@@ -86,10 +86,10 @@ class NDPT_OT_MergeDuplicateNodeGroups(bpy.types.Operator):
     bl_label = "Rename data blocks to match object name"
     bl_options = {"REGISTER", "UNDO"}
     
-    # Only enable in object mode
+    # Enable button condition
     @classmethod
     def poll(cls, context):
-        return context.mode == "OBJECT"
+        return True
     
     # Button is pressed
     def execute(self, context):
@@ -155,7 +155,10 @@ class NDPT_OT_ApplyArmatureModifiers(bpy.types.Operator):
     # Only enable in object mode
     @classmethod
     def poll(cls, context):
-        return context.mode == "OBJECT"
+        enabled = False
+        if context.mode == "OBJECT" or context.mode == "POSE":
+            enabled = True
+        return enabled
     
     # Button is pressed
     def execute(self, context):
@@ -165,6 +168,10 @@ class NDPT_OT_ApplyArmatureModifiers(bpy.types.Operator):
         logging.info(f"settings:")
         logging.info(f"restore modifiers: {context.scene.NDPT_OT_ApplyArmatureModifiers_RestoreModifiers}")
         logging.info(f"apply rest pose: {context.scene.NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose}")
+        
+        # Run the function
+        result = ndpt_functions.apply_armature_modifiers(restoremodifier = context.scene.NDPT_OT_ApplyArmatureModifiers_RestoreModifiers, applyrestpose = context.scene.NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose)
+        self.report({'INFO'},str(result))
 
         return {'FINISHED'}
 
@@ -179,7 +186,10 @@ class NDPT_OT_ConvertScaleToLocation(bpy.types.Operator):
     # Only enable in object mode
     @classmethod
     def poll(cls, context):
-        return context.mode == "OBJECT"
+        enabled = False
+        if context.mode == "OBJECT" or context.mode == "POSE":
+            enabled = True
+        return enabled
     
     # Button is pressed
     def execute(self, context):
