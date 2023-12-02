@@ -42,11 +42,24 @@ def toggle_shape_keys(**kwargs):
 
 # Function to rename data blocks to their objects name
 def sync_data_block_names():
-    return "WIP"
+    # Initiate logging
+    msgs = []
+    
+    # Get a list of all objects
+    for obj in bpy.data.objects:
+        # Rename the data to match the object name
+        obj.data.name = obj.name
+    
+    # End
+    msgs.append("Renamed data blocks")
+    return msgs
 
 
 # Function to remove duplicate node groups
 def merge_duplicate_node_groups():
+    # Initiate logging
+    msgs = []
+    
     return "WIP"
 
 
@@ -60,11 +73,194 @@ def convert_particles_to_curves(**kwargs):
     attachmentuvmap = kwargs.get('attachmentuvmap', "UVMap")
     attachcurves =  kwargs.get('attachcurves', True)
     
-    return "WIP"
+    #--------------------------------------------------------------------------------------------
+    
+    # Store original mode
+    originalmode = bpy.context.mode
+    
+    # Set mode to object mode
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Check that an active object is selected
+    if not bpy.context.active_object:
+        msgs.append("No active object")
+        return msgs
+    
+    # Get selected object
+    surface_object = bpy.context.active_object
+    
+    # Check that the object is a mesh
+    if surface_object.type != 'MESH':
+        msgs.append("Active object must be a mesh")
+        return msgs
+    
+    # Check that the object has an UV map by that name
+    if not surface_object.data.uv_layers.get(attachmentuvmap):
+        msgs.append("Object has no UV map by specified name")
+        return msgs
+    
+    # Check that the object has particle systems
+    if not surface_object.particle_systems:
+        msgs.append("Object has no particle systems")
+        return msgs
+    
+    # Get active particle system
+    particle_system = surface_object.particle_systems.active
+    
+    # Save particle system child type, we set it back at the end
+    particle_system_childtype = particle_system.settings.child_type
+    
+    # Set active particle system child type to NONE
+    particle_system.settings.child_type = 'NONE'
+    
+    # Get particle system modifier in case it has a different name
+    for modifier in surface_object.modifiers:
+        if modifier.type == "PARTICLE_SYSTEM":
+            if modifier.particle_system == particle_system:
+                particle_system_modifier = modifier
+    
+    
+    # Force set particle system to visible
+    particle_system_modifier.show_viewport = True
+    
+    #--------------------------------------------------------------------------------------------
+    # Handle pre-existing object
+    preexisting = False
+    # Detect pre-exising curves object
+    if bpy.data.objects.get(particle_system.name):
+        preexisting = True
+        haircurvesobjectold = bpy.data.objects.get(particle_system.name)
+        
+        # Rename old hair curves object
+        haircurvesobjectold.name = particle_system.name + "_Old"
+        
+        # Get collections from old hair curves object
+        haircollections = haircurvesobjectold.users_collection
+        
+        # Get hair preset name from old hair curves object
+        nodegroupname = haircurvesobjectold.modifiers[0].node_group.name
+    
+    if preexisting == False:
+        # Check that the default hair preset exists
+        # Skip if string is empty
+        if nodegroupname != "" and nodegroupname != "None" and nodegroupname != "none":
+            if not bpy.data.node_groups.get(nodegroupname):
+                msgs.append("Could not find node group")
+                return msgs
+    
+    #--------------------------------------------------------------------------------------------
+    # New hair curves object setup
+    # Create new hair curves object
+    bpy.ops.curves.convert_from_particle_system()
+    
+    # Get new hair curves object
+    haircurvesobjectnew = bpy.data.objects.get(particle_system.name)
+    
+    # If it exists, clear collections and set them. Otherwise, just leave it as the active collection.
+    if preexisting == True:
+        # Remove from collections
+        for collection in haircurvesobjectnew.users_collection:
+            collection.objects.unlink(haircurvesobjectnew)
+        
+        # Set collection
+        for collection in haircollections:
+            collection.objects.link(haircurvesobjectnew)
+    
+    #--------------------------------------------------------------------------------------------
+    # Set new hair curves object data
+    
+    # Set new hair curves object surface
+    haircurvesobjectnew.data.surface = surface_object
+    
+    # Set new hair curves object UV map
+    haircurvesobjectnew.data.surface_uv_map = attachmentuvmap
+    
+    #--------------------------------------------------------------------------------------------
+    # Attach hair curves to surface
+    # We attach the curves to the surface in sculpt mode so that 
+    if attachcurves == True:
+        bpy.ops.object.mode_set(mode='SCULPT_CURVES')
+        bpy.ops.curves.snap_curves_to_surface(attach_mode='NEAREST')
+        bpy.ops.curves.sculptmode_toggle()
+    
+    #--------------------------------------------------------------------------------------------
+    # Apply visual profile to new hair curves object for easier viewing
+    # Curves have a large radius by default so this is just for the viewport while the curves have their modifiers off.
+    # Add profile modifier
+    modifier_profile = haircurvesobjectnew.modifiers.new(name="Set Hair Curve Profile", type='NODES')
+    modifier_profile.node_group = bpy.data.node_groups.get("Set Hair Curve Profile")
+    modifier_profile["Input_3"] = 0.0005
+    
+    # Apply profile modifier
+    bpy.ops.object.modifier_apply(modifier="Set Hair Curve Profile")
+    
+    #--------------------------------------------------------------------------------------------
+    # Add hair curves geometry nodes preset
+    if preexisting == False and (nodegroupname != "" and nodegroupname != "None" and nodegroupname != "none"):
+        # Add new hair curves object geometry nodes preset
+        modifier_nodes_new = haircurvesobjectnew.modifiers.new(name=nodegroupname, type='NODES')
+        modifier_nodes_new.node_group = bpy.data.node_groups.get(nodegroupname)
+    
+    #--------------------------------------------------------------------------------------------
+    # Get data to copy
+    
+    if preexisting == True:
+        # WE NEED TO REPLACE THIS TO COPY ALL MATERIALS AND NODE GROUPS
+        for modifier in haircurvesobjectold.modifiers:
+            new_modifier = haircurvesobjectnew.modifiers.new(name=modifier.name, type=modifier.type)
+            new_modifier.node_group = modifier.node_group
+            for i in modifier.node_group.inputs[1::]:
+                new_modifier[i.identifier] = modifier[i.identifier]
+        
+        # Get old object material
+        haircurvesobjectold_material = haircurvesobjectold.data.materials[0]
+    
+        # Add new object material
+        bpy.ops.object.material_slot_add()
+        haircurvesobjectnew.data.materials[0] = haircurvesobjectold_material
+        
+        # Delete old hair curves object
+        bpy.data.objects.remove(haircurvesobjectold)
+        
+    if preexisting == False:
+        # Get particle settings material
+        particle_system_material = surface_object.material_slots[surface_object.particle_systems.active.settings.material - 1].material
+        
+        # Add a slot
+        bpy.ops.object.material_slot_add()
+        
+        # Set the material
+        haircurvesobjectnew.data.materials[0] = particle_system_material
+    
+    #--------------------------------------------------------------------------------------------
+    # Finalize & cleanup
+    
+    # Hide curves object modifiers for performance
+    for modifier in bpy.context.object.modifiers:
+        modifier.show_viewport = False
+    
+    # Set active object back to surface object
+    bpy.context.view_layer.objects.active = surface_object
+    
+    # Set active particle system child type back to original
+    particle_system.settings.child_type = particle_system_childtype
+    
+    # Set particle system to hidden
+    particle_system_modifier.show_viewport = False
+    
+    # Set mode back to original mode
+    bpy.ops.object.mode_set(mode=originalmode)
+    
+    logging.info("finished conversion")
+    msgs.append("Converted particle system to curves")
+    return msgs
 
 
 # Function to convert curves back to a particle system and automatically make one if there  isn't one
 def convert_curves_to_particles():
+    # Initiate logging
+    msgs = []
+    
     return "WIP"
 
 
@@ -259,4 +455,6 @@ def select_asymmetrical_vertices(**kwargs):
 
 # Function to select half of the vertices of a model
 def select_mergeable_vertices():
+    # Initiate logging
+    msgs = []
     return "WIP"

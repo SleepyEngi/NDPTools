@@ -17,24 +17,35 @@ Installation instructions
 Features
 Toggle shape keys:
 -Toggles all shape keys in an object.
+-Settings:
+-Toggle individually: Toggles the status of each key individually instead of turning all key shapes on/off.
 
 Sync data block names: 
--WIP
+-Renames all object's data blocks to match the name of the object.
 
 Merge duplicate node groups: 
 -WIP
 
 Convert particles to curves:
--WIP
+-Converts a particle system to curves and automatically sets up it's surface object, uv map, and adds a geometry nodes modifier.
+-If a pre-existing curves object exists, it copies all data and modifiers from that object and restores it to the new curves object.
+-Useful for using the old particle system combing and then quickly converting it back to the new hair curves
+-Settings:
+-Default node group: The geometry nodes group that will be added by default if there was no pre-existing curves object. Can be empty.
+-Attachment UV map: The uv map that the curves will be attached to
+-Attach curves: Automatically go into sculpt mode and run an attach curves to nearest surface operation.
 
 Convert curves to particles: 
 -WIP
 
 Apply armature modifiers:
 -Applies the armature modifiers of all the children of a selected armature.
+-Settings: 
+-Restore modifiers: After applying the modifiers, adds a copy back in.
+-Apply pose as rest pose: After applying modifiers, applies the current armature's pose as the rest pose.
 
 Convert scale to location:
--Converts a pose bone's scale transforms into visually identical location transforms
+-Converts a pose bone's scale transforms into visually identical location transforms.
 
 Select half:
 -WIP
