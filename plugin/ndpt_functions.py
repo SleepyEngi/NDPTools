@@ -203,21 +203,23 @@ def convert_particles_to_curves(**kwargs):
     
     #--------------------------------------------------------------------------------------------
     # Get data to copy
-    
     if preexisting == True:
-        # WE NEED TO REPLACE THIS TO COPY ALL MATERIALS AND NODE GROUPS
+        # Copy all modifiers from old curves object to new curves object
         for modifier in haircurvesobjectold.modifiers:
+            # Create a new modifier in the new curves and copy the types
             new_modifier = haircurvesobjectnew.modifiers.new(name=modifier.name, type=modifier.type)
+            # For now hair curves objects can only have geometry nodes modifiers so this is probably safe
             new_modifier.node_group = modifier.node_group
+            # Copy all the inputs starting from the second one because the first is geometry and can't be copied
             for i in modifier.node_group.inputs[1::]:
                 new_modifier[i.identifier] = modifier[i.identifier]
         
-        # Get old object material
-        haircurvesobjectold_material = haircurvesobjectold.data.materials[0]
-    
-        # Add new object material
-        bpy.ops.object.material_slot_add()
-        haircurvesobjectnew.data.materials[0] = haircurvesobjectold_material
+        # Copy all materials
+        materialnum = 0
+        for materialslot in haircurvesobjectold.material_slots:
+            bpy.ops.object.material_slot_add()
+            haircurvesobjectnew.data.materials[materialnum] = materialslot.material
+            materialnum = materialnum + 1
         
         # Delete old hair curves object
         bpy.data.objects.remove(haircurvesobjectold)
