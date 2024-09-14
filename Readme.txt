@@ -1,7 +1,7 @@
 NDPTools Blender Addon by NDP
-This is my addon for varied utility buttons
+This is my addon for varied functions & buttons
 Version: 0.0.1
-YYYY-MM-DD: 2023-11-30
+YYYY-MM-DD: 2024-06-28
 =========================================================================================================
 Download instructions
 1. You can find the latest version of this addon at https://github.com/SleepyEngi/NDPTools

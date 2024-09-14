@@ -47,8 +47,10 @@ def sync_data_block_names():
     
     # Get a list of all objects
     for obj in bpy.data.objects:
-        # Rename the data to match the object name
-        obj.data.name = obj.name
+        # Check that it is not a nonetype object
+        if obj.type != 'EMPTY':
+            # Rename the data to match the object name
+            obj.data.name = obj.name
     
     # End
     msgs.append("Renamed data blocks")
@@ -72,6 +74,7 @@ def convert_particles_to_curves(**kwargs):
     nodegroupname = kwargs.get('nodegroupname', "Hair Preset")
     attachmentuvmap = kwargs.get('attachmentuvmap', "UVMap")
     attachcurves =  kwargs.get('attachcurves', True)
+    skipchild =  kwargs.get('skipchild', True)
     
     #--------------------------------------------------------------------------------------------
     
@@ -110,14 +113,16 @@ def convert_particles_to_curves(**kwargs):
     # Save particle system child type, we set it back at the end
     particle_system_childtype = particle_system.settings.child_type
     
-    # Set active particle system child type to NONE
-    particle_system.settings.child_type = 'NONE'
+    if skipchild == True:
+        # Set active particle system child type to NONE
+        particle_system.settings.child_type = 'NONE'
     
     # Get particle system modifier in case it has a different name
     for modifier in surface_object.modifiers:
         if modifier.type == "PARTICLE_SYSTEM":
             if modifier.particle_system == particle_system:
                 particle_system_modifier = modifier
+                particle_system_modifier.name = "Test"
     
     
     # Force set particle system to visible
@@ -184,12 +189,57 @@ def convert_particles_to_curves(**kwargs):
         bpy.ops.curves.sculptmode_toggle()
     
     #--------------------------------------------------------------------------------------------
+    # Import the default node groups if missing
+    # Check if the node groups already exist.
+    if bpy.data.node_groups.get("Set Hair Curve Profile") == None:
+
+        # Report that import is necessary
+        logging.info(f"Hair Curve Profile node group is missing. Importing it now.")
+
+        # Get the blender directory of the current version
+        blender_directory = bpy.utils.resource_path('LOCAL')
+
+        # File path
+        source_file = source_file = os.path.join(blender_directory, "datafiles", "assets\\geometry_nodes\\procedural_hair_node_assets.blend")
+
+        # Node group to import
+        node_group_name = "Set Hair Curve Profile"
+        
+        # Import the node group
+        # Check if the file exists
+        if not os.path.isfile(source_file):
+            # Report failure to find the asset file
+            msgs.append("Failed to find the node group assets file. Append the hair curve profile node manually.")
+            return msgs
+        else:
+            # Load the custom node group from the blend file
+            with bpy.data.libraries.load(source_file, link=False) as (data_from, data_to):
+                if node_group_name in data_from.node_groups:
+                    data_to.node_groups = [node_group_name]
+
+            # Check if the node group was successfully loaded
+            if not data_to.node_groups or not data_to.node_groups[0]:
+                msgs.append("Failed to load the node group. Append the hair curve profile node manually.")
+                return msgs
+            else:
+                #Clear the fake user flag and asset flag
+                imported_node_group = bpy.data.node_groups[node_group_name]
+                imported_node_group.asset_clear()
+                imported_node_group.use_fake_user = False
+
+            # Report successful import
+            logging.info("Succesfully imported the hair curve profile node group")
+    
+    #--------------------------------------------------------------------------------------------
     # Apply visual profile to new hair curves object for easier viewing
     # Curves have a large radius by default so this is just for the viewport while the curves have their modifiers off.
     # Add profile modifier
     modifier_profile = haircurvesobjectnew.modifiers.new(name="Set Hair Curve Profile", type='NODES')
     modifier_profile.node_group = bpy.data.node_groups.get("Set Hair Curve Profile")
-    modifier_profile["Input_3"] = 0.0005
+    
+    #Copy radius from particle system
+    modifier_profile["Input_3"] = particle_system.settings.root_radius * particle_system.settings.radius_scale * 0.5
+    modifier_profile["Input_2"] = ((particle_system.settings.shape - -1) / (1 - -1)) * (1 - 0) + 0
     
     # Apply profile modifier
     bpy.ops.object.modifier_apply(modifier="Set Hair Curve Profile")
@@ -236,6 +286,10 @@ def convert_particles_to_curves(**kwargs):
     
     #--------------------------------------------------------------------------------------------
     # Finalize & cleanup
+    
+    # Set the parent to the surface object
+    if surface_object.parent:
+        haircurvesobjectnew.parent = surface_object.parent
     
     # Hide curves object modifiers for performance
     for modifier in bpy.context.object.modifiers:
