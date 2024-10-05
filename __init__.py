@@ -83,31 +83,6 @@ class NDPT_OT_SyncDataNames(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Merge duplicate node groups operator
-class NDPT_OT_MergeDuplicateNodeGroups(bpy.types.Operator):
-    """ Rename object data blocks to be the same as the object name """
-    bl_idname = "object.mergeduplicatenodegroups"
-    bl_label = "Rename data blocks to match object name"
-    bl_options = {"REGISTER", "UNDO"}
-    
-    # Enable button condition
-    @classmethod
-    def poll(cls, context):
-        return True
-    
-    # Button is pressed
-    def execute(self, context):
-        # Log settings
-        self.report({'INFO'},f"Merging duplicate node groups")
-        logging.info(f"merging duplicate node groups")
-        
-        # Run the function
-        result = ndpt_functions.merge_duplicate_node_groups()
-        self.report({'INFO'},str(result))
-
-        return {'FINISHED'}
-
-
 # Convert particles to curves
 class NDPT_OT_ConvertParticlesToCurves(bpy.types.Operator):
     """ Convert active particle system into a curves object """
@@ -300,6 +275,95 @@ class  NDPT_OT_SelectMergeable(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Select similar operator
+class NDPT_OT_SelectSimilarNodes(bpy.types.Operator):
+    """ Selects all nodes of the same type """
+    bl_idname = "nodes.selectsimilar"
+    bl_label = "Selects all nodes of the same type"
+    bl_options = {"REGISTER", "UNDO"}
+    
+    # Enabled always
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    # Button is pressed
+    def execute(self, context):
+        # Log settings
+        self.report({'INFO'},f"Selecting similar nodes")
+        logging.info(f"selecting similar nodes")
+
+        
+        # Run the function
+        result = ndpt_functions.nodes_select_similar()
+        self.report({'INFO'},str(result))
+
+        return {'FINISHED'}
+
+
+# Merge duplicate node groups operator
+class NDPT_OT_MergeDuplicateNodeGroups(bpy.types.Operator):
+    """ Merges duplicate node groups across the scene """
+    bl_idname = "nodes.mergeduplicatenodegroups"
+    bl_label = "Merges duplicate node groups across the scene"
+    bl_options = {"REGISTER", "UNDO"}
+    
+    # Enable button condition
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    # Button is pressed
+    def execute(self, context):
+        # Log settings
+        self.report({'INFO'},f"Merging duplicate node groups")
+        logging.info(f"merging duplicate node groups")
+        logging.info(f"settings:")
+        logging.info(f"priority mode: {context.scene.NDPT_OT_MergeDuplicateNodeGroups_PriorityMode}")
+        
+        # Run the function
+        result = ndpt_functions.node_group_merge_duplicates(prioritymode = context.scene.NDPT_OT_MergeDuplicateNodeGroups_PriorityMode)
+        self.report({'INFO'},str(result))
+
+        return {'FINISHED'}
+
+
+# Merge duplicate node groups operator
+class NDPT_OT_FindNodeParents(bpy.types.Operator):
+    """ Find which node groups contain this node group """
+    bl_idname = "nodes.findnodeparents"
+    bl_label = "Find which node groups contain this node group"
+    bl_options = {"REGISTER", "UNDO"}
+    
+    # Enable button condition
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    # Button is pressed
+    def execute(self, context):
+        # Log settings
+        self.report({'INFO'},f"Finding node parents")
+        logging.info(f"finding node parents")
+        logging.info(f"settings:")
+        logging.info(f"node group name: {context.scene.NDPT_OT_FindNodeParents_DefaultNodeGroup}")
+        
+        # Run the function
+        result = ndpt_functions.node_group_list_parents(nodegroupname = context.scene.NDPT_OT_FindNodeParents_DefaultNodeGroup)
+        self.report({'INFO'},str(result))
+
+        return {'FINISHED'}
+
+
+# --------------------------------------------------------------------------------
+
+# Function to dynamically get all node groups in the scene
+def get_node_groups(self, context):
+    items = []
+    for node_group in bpy.data.node_groups:
+        items.append((node_group.name, node_group.name, ""))
+    return items
+
 # --------------------------------------------------------------------------------
 # Panels
 # Adds panels and buttons in the siderbar that when pressed, run operators and their settings
@@ -335,6 +399,43 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
         col.separator()
         
         #--------------------------------------------------------------------------------------
+        # Geometry nodes
+        
+        # Create a box for separation
+        box = col.box()
+        box.label(text="Nodes")
+        
+        # Button
+        prop = box.operator(NDPT_OT_SelectSimilarNodes.bl_idname, text="Select similar nodes")
+        
+        # Separate
+        col.separator()
+        
+        # Button
+        prop = box.operator(NDPT_OT_FindNodeParents.bl_idname, text="Find Node Group Parents")
+        
+        # Label
+        box.label(text="Node Group:")
+        
+        # Button settings
+        box.prop(context.scene, "NDPT_OT_FindNodeParents_DefaultNodeGroup")
+        
+        # Separate
+        col.separator()
+        
+        # Button
+        prop = box.operator(NDPT_OT_MergeDuplicateNodeGroups.bl_idname, text="Merge duplicate node groups")
+        
+        # Label
+        box.label(text="Priority mode:")
+        
+        # Button settings
+        box.prop(context.scene, "NDPT_OT_MergeDuplicateNodeGroups_PriorityMode")
+        
+        # Separate
+        col.separator()
+        
+        #--------------------------------------------------------------------------------------
         # Data
         
         # Create a box for separation
@@ -343,12 +444,6 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
         
         # Button
         prop = box.operator(NDPT_OT_SyncDataNames.bl_idname, text="Sync data block names")
-        
-        # Separate
-        col.separator()
-        
-        # Button
-        prop = box.operator(NDPT_OT_MergeDuplicateNodeGroups.bl_idname, text="Merge duplicate node groups")
         
         # Separate
         col.separator()
@@ -454,9 +549,9 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
 
 # List of enabled classes
 classes = [
+    NDPT_PT_Sidebar,
     NDPT_OT_ToggleShapeKeys,
     NDPT_OT_SyncDataNames,
-    NDPT_OT_MergeDuplicateNodeGroups,
     NDPT_OT_ConvertParticlesToCurves,
     NDPT_OT_ConvertCurvesToParticles,
     NDPT_OT_ApplyArmatureModifiers,
@@ -464,7 +559,9 @@ classes = [
     NDPT_OT_SelectHalf,
     NDPT_OT_SelectAsymmetrical,
     NDPT_OT_SelectMergeable,
-    NDPT_PT_Sidebar,
+    NDPT_OT_SelectSimilarNodes,
+    NDPT_OT_FindNodeParents,
+    NDPT_OT_MergeDuplicateNodeGroups,
 ]
 
 # Run when enabling addon
@@ -539,10 +636,26 @@ def register():
         default = "+X"
     )
     
-    # Log
-    #logging.info("NDP Tools Enabled")
+    # Enum Property
+    # Dropdown for finding node parents
+    bpy.types.Scene.NDPT_OT_FindNodeParents_DefaultNodeGroup = bpy.props.EnumProperty(
+        name = '',
+        description = "Search which node groups contain this node group",
+        items = get_node_groups,
+    )
     
+    # Enum Property
+    # Merge duplicate node groups: Priority mode
+    bpy.types.Scene.NDPT_OT_MergeDuplicateNodeGroups_PriorityMode = bpy.props.EnumProperty(
+        name='',
+        description = "Priority mode",
+        items = [("Oldest", "Oldest", "Prioritizes the oldest node group with the lowest suffix number"),("Newest", "Newest", "Prioritizes the newest node group with the higest suffix number")],
+        default = "Oldest"
+    )
+    
+
 # Run when disabling addon
+# Delete all the custom settings buttons
 def unregister():
     # Unregister button settings
     del bpy.types.Scene.NDPT_OT_ToggleShapeKeys_ToggleAll
@@ -553,6 +666,8 @@ def unregister():
     del bpy.types.Scene.NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose
     del bpy.types.Scene.NDPT_OT_SelectHalf_SelectCenter
     del bpy.types.Scene.NDPT_OT_SelectHalf_SymmetryAxis
+    del bpy.types.Scene.NDPT_OT_FindNodeParents_DefaultNodeGroup
+    del bpy.types.Scene.NDPT_OT_MergeDuplicateNodeGroups_PriorityMode
     
     # Unregister classes
     for cls in classes:
@@ -561,5 +676,6 @@ def unregister():
     # Log   
     logging.info("NDP Tools Disabled")
 
+# Register
 if __name__ == '__main__':
     register()

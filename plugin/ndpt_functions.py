@@ -57,14 +57,6 @@ def sync_data_block_names():
     return msgs
 
 
-# Function to remove duplicate node groups
-def merge_duplicate_node_groups():
-    # Initiate logging
-    msgs = []
-    
-    return "WIP"
-
-
 # Function to convert particle systems to a curve object with automatically set surface, uv map, and node group
 def convert_particles_to_curves(**kwargs):
     # Initiate logging
@@ -258,11 +250,18 @@ def convert_particles_to_curves(**kwargs):
         for modifier in haircurvesobjectold.modifiers:
             # Create a new modifier in the new curves and copy the types
             new_modifier = haircurvesobjectnew.modifiers.new(name=modifier.name, type=modifier.type)
+            
+            #Hide modifier in viewport for performance
+            new_modifier.show_viewport = False
+            
             # For now hair curves objects can only have geometry nodes modifiers so this is probably safe
             new_modifier.node_group = modifier.node_group
+            
             # Copy all the inputs starting from the second one because the first is geometry and can't be copied
-            for i in modifier.node_group.inputs[1::]:
-                new_modifier[i.identifier] = modifier[i.identifier]
+            for i in modifier.node_group.interface.items_tree:
+                #check that it is a socket and not a panel, check that its an input, and check that its not geometry
+                if i.item_type == 'SOCKET' and i.in_out == 'INPUT' and  i.socket_type != 'NodeSocketGeometry':
+                    new_modifier[i.identifier] = modifier[i.identifier]
         
         # Copy all materials
         materialnum = 0
@@ -514,3 +513,98 @@ def select_mergeable_vertices():
     # Initiate logging
     msgs = []
     return "WIP"
+
+
+# Function to find groups that contain a certain node group
+def node_group_list_parents(**kwargs):
+    # Initiate logging
+    msgs = []
+    
+    # Get settings
+    nodegroupname = kwargs.get('nodegroupname', "None")
+    
+    # Start, check that node exists
+    logging.info(f"----------------------------------------------------------------------------------")
+    if bpy.data.node_groups.get(nodegroupname):
+        # Get the node group by name
+        target_nodegroup = bpy.data.node_groups.get(nodegroupname)
+    else:
+        logging.info("Node group not found")
+        msgs.append("Node group not found")
+        return msgs
+    
+    # Start list
+    logging.info(f"Listing parents for '{target_nodegroup.name}'")
+    logging.info(f"")
+    
+    # Log number of owners
+    counter = 0
+    
+    # Iterate over every existing node group
+    for nodegroup in bpy.data.node_groups:
+        if target_nodegroup != nodegroup:
+            for node in nodegroup.nodes:
+                if node.bl_rna.identifier == 'GeometryNodeGroup' or node.bl_rna.identifier == 'ShaderNodeGroup':
+                    if node.node_tree == target_nodegroup:
+                        logging.info(f"Node group '{nodegroup.name}' contains '{target_nodegroup.name}'")
+                        counter = counter + 1
+    
+    # Check materials
+    for nodegroup in bpy.data.materials:
+        if nodegroup.node_tree and nodegroup.node_tree.nodes:
+            for node in nodegroup.node_tree.nodes:
+                if node.bl_rna.identifier == 'GeometryNodeGroup' or node.bl_rna.identifier == 'ShaderNodeGroup':
+                    if node.node_tree == target_nodegroup:
+                        logging.info(f"Material '{nodegroup.name}' contains '{target_nodegroup.name}'")
+                        counter = counter + 1
+            
+    
+    # Finalize
+    logging.info(f"")
+    logging.info(f"There are {counter} instances containing '{target_nodegroup.name}'")
+    
+    msgs.append(f"Found {counter} results, check console for detailed list.")
+    return msgs
+
+
+# Function to replace duplicate node groups that end in .001 with the original
+def node_group_merge_duplicates(**kwargs):
+    # Initiate logging
+    msgs = []
+    
+    # Get settings
+    priority = kwargs.get('prioritymode', "Oldest")
+
+    for nodegroup in bpy.data.node_groups:
+        if nodegroup.name[-4] == '.' and nodegroup.name[-3:].isdigit():
+            print("Node group is a duplicate")
+    
+    return "WIP"
+
+
+# Function to select similar nodes in the current editor
+def nodes_select_similar():
+    # get all node editor windows and the node groups open in them
+    nodegroups = [editor.spaces.active.edit_tree.nodes for editor in bpy.context.window_manager.windows[0].screen.areas if editor.type == 'NODE_EDITOR']
+    
+    # iterate over every node group
+    for nodegroup in nodegroups:
+        activenode = nodegroup.active
+        activenode_type = activenode.bl_rna.identifier
+        
+        # iterate over every node inside
+        for node in nodegroup:
+            # check if node has the same identifier type
+            if node.bl_rna.identifier == activenode_type:
+                # check if it's a node group and if so only select it if it has the same group
+                print(activenode_type)
+                if activenode_type == 'GeometryNodeGroup' or activenode_type == 'ShaderNodeGroup':
+                    if node.node_tree == activenode.node_tree:
+                        node.select = True
+                # if its not a node group node, just select all similar
+                else:
+                    node.select = True
+    return "Selected all similar nodes"
+
+
+# Hi
