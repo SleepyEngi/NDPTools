@@ -686,7 +686,7 @@ def join_selected_objects_with_geometry_nodes(**kwargs):
     msgs = []
     
     # Retrieve the keyword argument for differentiating materials, default to True
-    differentiate_materials = kwargs.get('differentiate_materials', True)
+    differentiate_materials = kwargs.get('DifferentiateMaterials', True)
     
     # Get the active object
     active_obj = bpy.context.view_layer.objects.active
@@ -774,7 +774,6 @@ def join_selected_objects_with_geometry_nodes(**kwargs):
             obj_info_node.inputs[0].default_value = obj
             # Link the Object Info node's Geometry output to the Join Geometry node's inputs
             node_group.links.new(obj_info_node.outputs["Geometry"], join_geometry_node.inputs[0])
-            print(f"Linked Object Info node for {obj.name} to Join Geometry node")
         
         #Link to output node desu
         node_group.links.new(join_geometry_node.outputs[0],output_node.inputs[0])
@@ -789,9 +788,9 @@ def join_selected_objects_with_geometry_nodes(**kwargs):
         obj.hide_render = True
     
     # Print a message indicating the number of combined objects created
-    print(f"Created {len(combined_objects)} combined objects for unique materials and hid the original objects.")
+    msgs.append(f"Created {len(combined_objects)} combined objects for unique materials and hid the original objects.")
     
-    return "WIP"
+    return msgs
 
 
 # Hi
