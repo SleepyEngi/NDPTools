@@ -34,7 +34,7 @@ from .plugin import ndpt_functions
 # Toggle shake keys operator
 class NDPT_OT_ToggleShapeKeys(bpy.types.Operator):
     """ Toggle the mute state of all shape keys """
-    bl_idname = "object.toggleshapekeys"
+    bl_idname = "ndptobject.toggleshapekeys"
     bl_label = "Toggle all shape keys"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -61,7 +61,7 @@ class NDPT_OT_ToggleShapeKeys(bpy.types.Operator):
 # Join with geometry nodes
 class NDPT_OT_JoinGeometryNodes(bpy.types.Operator):
     """ Joins objects using a geometry nodes modifier, which allows joining different object types """
-    bl_idname = "object.joinwithgeometrynodes"
+    bl_idname = "ndptobject.joinwithgeometrynodes"
     bl_label = "Join selected with geometry nodes"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -88,7 +88,7 @@ class NDPT_OT_JoinGeometryNodes(bpy.types.Operator):
 # Synchronize data block names operator
 class NDPT_OT_SyncDataNames(bpy.types.Operator):
     """ Rename object data blocks to be the same as the object name """
-    bl_idname = "object.syncdatanames"
+    bl_idname = "ndptdata.syncdatanames"
     bl_label = "Rename data blocks to match object name"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -113,7 +113,7 @@ class NDPT_OT_SyncDataNames(bpy.types.Operator):
 # Convert particles to curves
 class NDPT_OT_ConvertParticlesToCurves(bpy.types.Operator):
     """ Convert active particle system into a curves object """
-    bl_idname = "object.convertparticlestocurves"
+    bl_idname = "ndpthair.convertparticlestocurves"
     bl_label = "Converts a particle system to curves"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -131,9 +131,10 @@ class NDPT_OT_ConvertParticlesToCurves(bpy.types.Operator):
         logging.info(f"node group name: {context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup}")
         logging.info(f"attachment uv map: {context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap}")
         logging.info(f"attach curves: {context.scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves}")
+        logging.info(f"only parents: {context.scene.NDPT_OT_ConvertParticlesToCurves_OnlyParents}")
         
         # Run the function
-        result = ndpt_functions.convert_particles_to_curves(nodegroupname = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup,attachmentuvmap = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap,attachcurves = context.scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves)
+        result = ndpt_functions.convert_particles_to_curves(nodegroupname = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup,attachmentuvmap = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap,attachcurves = context.scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves,skipchild = context.scene.NDPT_OT_ConvertParticlesToCurves_OnlyParents)
         self.report({'INFO'},str(result))
 
         return {'FINISHED'}
@@ -142,7 +143,7 @@ class NDPT_OT_ConvertParticlesToCurves(bpy.types.Operator):
 # Convert curves to particles 
 class NDPT_OT_ConvertParticlesAll(bpy.types.Operator):
     """ Convert all particle systems of the selected object to curves """
-    bl_idname = "object.convertparticlesall"
+    bl_idname = "ndpthair.convertparticlesall"
     bl_label = "Convert all particle systems of an object to curves"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -157,7 +158,7 @@ class NDPT_OT_ConvertParticlesAll(bpy.types.Operator):
         logging.info(f"converting particles to equivalent curves")
         
         # Run the function
-        result = ndpt_functions.convert_particles_all()
+        result = ndpt_functions.convert_particles_all(nodegroupname = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup,attachmentuvmap = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap,attachcurves = context.scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves,skipchild = context.scene.NDPT_OT_ConvertParticlesToCurves_OnlyParents)
         self.report({'INFO'},str(result))
         
         return {'FINISHED'}
@@ -166,7 +167,7 @@ class NDPT_OT_ConvertParticlesAll(bpy.types.Operator):
 # Apply armature modifiers operator
 class NDPT_OT_ApplyArmatureModifiers(bpy.types.Operator):
     """ Applies the armature modifiers of all children of an armature """
-    bl_idname = "object.applyarmaturemodifiers"
+    bl_idname = "ndptarmature.applyarmaturemodifiers"
     bl_label = "Apply armature modifiers of all children objects of an armature"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -197,7 +198,7 @@ class NDPT_OT_ApplyArmatureModifiers(bpy.types.Operator):
 # Convert scale to location operator
 class NDPT_OT_ConvertScaleToLocation(bpy.types.Operator):
     """ Converts scale bone pose transforms into location transforms in the same visual location """
-    bl_idname = "pose.convertscaletopose"
+    bl_idname = "ndptarmature.convertscaletopose"
     bl_label = "Convert bone scale transforms into location transforms"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -225,7 +226,7 @@ class NDPT_OT_ConvertScaleToLocation(bpy.types.Operator):
 # Select half operator
 class NDPT_OT_SelectHalf(bpy.types.Operator):
     """ Selects all the vertices on one half of the model """
-    bl_idname = "edit.selecthalf"
+    bl_idname = "ndptedit.selecthalf"
     bl_label = "Select all the vertices on one half of the model"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -253,7 +254,7 @@ class NDPT_OT_SelectHalf(bpy.types.Operator):
 # Select asymmetrical operator
 class  NDPT_OT_SelectAsymmetrical(bpy.types.Operator):
     """ Selects vertices that aren't symmetric with the other half of the model """
-    bl_idname = "edit.selectasymmetrical"
+    bl_idname = "ndptedit.selectasymmetrical"
     bl_label = "Selects vertices that do not have symmetry with the other half of the model"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -280,7 +281,7 @@ class  NDPT_OT_SelectAsymmetrical(bpy.types.Operator):
 # Select mergeable operator
 class  NDPT_OT_SelectMergeable(bpy.types.Operator):
     """ Selects vertices that are in the same location as another vertex """
-    bl_idname = "edit.selectamergeable"
+    bl_idname = "ndptedit.selectamergeable"
     bl_label = "Selects vertices that are in the same location as another vertex"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -305,7 +306,7 @@ class  NDPT_OT_SelectMergeable(bpy.types.Operator):
 # Select similar operator
 class NDPT_OT_SelectSimilarNodes(bpy.types.Operator):
     """ Selects all nodes of the same type """
-    bl_idname = "nodes.selectsimilar"
+    bl_idname = "ndptnodes.selectsimilar"
     bl_label = "Selects all nodes of the same type"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -331,7 +332,7 @@ class NDPT_OT_SelectSimilarNodes(bpy.types.Operator):
 # Merge duplicate node groups operator
 class NDPT_OT_MergeDuplicateNodeGroups(bpy.types.Operator):
     """ Merges duplicate node groups across the scene """
-    bl_idname = "nodes.mergeduplicatenodegroups"
+    bl_idname = "ndptnodes.mergeduplicatenodegroups"
     bl_label = "Merges duplicate node groups across the scene"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -358,7 +359,7 @@ class NDPT_OT_MergeDuplicateNodeGroups(bpy.types.Operator):
 # Merge duplicate node groups operator
 class NDPT_OT_FindNodeParents(bpy.types.Operator):
     """ Find which node groups contain this node group """
-    bl_idname = "nodes.findnodeparents"
+    bl_idname = "ndptnodes.findnodeparents"
     bl_label = "Find which node groups contain this node group"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -541,6 +542,9 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
         # Button settings
         box.prop(context.scene, "NDPT_OT_ConvertParticlesToCurves_AttachCurves")
         
+        # Button settings
+        box.prop(context.scene, "NDPT_OT_ConvertParticlesToCurves_OnlyParents")
+        
         # Separate
         col.separator()
         
@@ -683,6 +687,14 @@ def register():
     )
     
     # Boolean Property
+    # Convert particle system to curves: attach curves to surface
+    bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_OnlyParents = bpy.props.BoolProperty(
+        name='Only parent curves',
+        description = "Only convert parent curves and skip interpolated child curves",
+        default = True
+    )
+    
+    # Boolean Property
     # Apply armature modifiers: restore modifiers
     bpy.types.Scene.NDPT_OT_ApplyArmatureModifiers_RestoreModifiers = bpy.props.BoolProperty(
         name='Restore modifiers',
@@ -743,6 +755,7 @@ def unregister():
     del bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup
     del bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap
     del bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves
+    del bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_OnlyParents
     del bpy.types.Scene.NDPT_OT_ApplyArmatureModifiers_RestoreModifiers
     del bpy.types.Scene.NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose
     del bpy.types.Scene.NDPT_OT_SelectHalf_SelectCenter

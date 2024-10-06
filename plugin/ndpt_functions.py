@@ -1,6 +1,8 @@
 import bpy
 import logging
 import os
+import bmesh
+from mathutils import Vector
 
 # Function to toggle all shape keys
 def toggle_shape_keys(**kwargs):
@@ -551,36 +553,195 @@ def convert_scale_to_loc():
 
 
 # Function to select half of the vertices of a model
-# WIP
 def select_model_half(**kwargs):
-    # Initiate logging
+    # Inititate logging
     msgs = []
     
-    # Get settings
-    selectcenter = kwargs.get('selectcenter', False)
-    symmetryaxis = kwargs.get('symmetryaxis', "+X")
+    # Check that we are in edit mode
+    if bpy.context.mode != 'EDIT_MESH':
+        msgs.append("Error: Must be in Edit Mode to use this function")
+        return msgs
     
-    return "WIP"
+    # Get the input arguments
+    selectcenter = kwargs.get('selectcenter', False)
+    symmetryaxis = kwargs.get('symmetryaxis', '+X')
+
+    # Set tolerance for the center selection
+    tolerance = 0.00000001
+    
+    # Ensure we are working on the active object and get the mesh
+    obj = bpy.context.active_object
+    bm = bmesh.from_edit_mesh(obj.data)
+
+    # Initialize axis and direction
+    axis_idx = 0  # Default is X axis
+    direction = 1  # Default is positive
+
+    # Determine which axis and direction to use based on symmetryaxis
+    if symmetryaxis == '-X':
+        axis_idx = 0
+        direction = -1
+    elif symmetryaxis == '+X':
+        axis_idx = 0
+        direction = 1
+    elif symmetryaxis == '-Y':
+        axis_idx = 1
+        direction = -1
+    elif symmetryaxis == '+Y':
+        axis_idx = 1
+        direction = 1
+    elif symmetryaxis == '-Z':
+        axis_idx = 2
+        direction = -1
+    elif symmetryaxis == '+Z':
+        axis_idx = 2
+        direction = 1
+
+    # Deselect all vertices first
+    bpy.ops.mesh.select_all(action='DESELECT')
+
+    # Select vertices based on position relative to the center and axis
+    for v in bm.verts:
+        pos = v.co[axis_idx] * direction
+        if pos > 0 or (selectcenter and abs(pos) < tolerance):
+            v.select = True
+    
+    # Update the mesh
+    bmesh.update_edit_mesh(obj.data)
+    
+    msgs.append("Selected half")
+    return msgs
 
 
 # Function to select asymmetric vertices
-# WIP
 def select_asymmetrical_vertices(**kwargs):
     # Initiate logging
     msgs = []
+
+    # Check that we are in edit mode
+    if bpy.context.mode != 'EDIT_MESH':
+        msgs.append("Error: Must be in Edit Mode to use this function")
+        return msgs
     
-    # Get settings
-    symmetryaxis = kwargs.get('symmetryaxis', "+X")
+    # Get the input arguments
+    symmetryaxis = kwargs.get('symmetryaxis', '+X')
+
+    # Set tolerance (float precision handling)
+    tolerance = 0.00000001
     
-    return "WIP"
+    # Ensure we are working on the active object and get the mesh
+    obj = bpy.context.active_object
+    bm = bmesh.from_edit_mesh(obj.data)
+
+    # Initialize axis and direction
+    axis_idx = 0  # Default is X axis
+    direction = 1  # Default is positive
+
+    # Determine which axis and direction to use based on symmetryaxis
+    if symmetryaxis == '-X':
+        axis_idx = 0
+        direction = -1
+    elif symmetryaxis == '+X':
+        axis_idx = 0
+        direction = 1
+    elif symmetryaxis == '-Y':
+        axis_idx = 1
+        direction = -1
+    elif symmetryaxis == '+Y':
+        axis_idx = 1
+        direction = 1
+    elif symmetryaxis == '-Z':
+        axis_idx = 2
+        direction = -1
+    elif symmetryaxis == '+Z':
+        axis_idx = 2
+        direction = 1
+
+    # Deselect all vertices first
+    bpy.ops.mesh.select_all(action='DESELECT')
+
+    # Counter for asymmetrical vertices
+    asymmetrical_count = 0
+
+    # Select vertices on the specified side that have no symmetrical counterpart
+    for v in bm.verts:
+        pos = v.co[axis_idx] * direction
+        
+        # We check only the vertices on the positive side
+        if pos > 0:
+            # Create a mirror coordinate on the opposite side
+            mirrored_pos = v.co.copy()
+            mirrored_pos[axis_idx] = -mirrored_pos[axis_idx]  # Flip the coordinate on the symmetry axis
+            
+            # Search for a corresponding vertex on the opposite side within the tolerance
+            mirrored_vertex_found = False
+            for mv in bm.verts:
+                if (mv.co - mirrored_pos).length < tolerance:
+                    mirrored_vertex_found = True
+                    break
+            
+            # If no symmetrical vertex was found, select this vertex
+            if not mirrored_vertex_found:
+                v.select = True
+                asymmetrical_count += 1
+    
+    # Update the mesh to reflect changes in the selection
+    bmesh.update_edit_mesh(obj.data)
+
+    msgs.append(f"Found {asymmetrical_count} asymmetrical vertices.")
+    
+    return msgs
 
 
-# Function to select half of the vertices of a model
-# WIP
+# Function to select only vertices that have a duplicate in the exact same location
 def select_mergeable_vertices():
     # Initiate logging
     msgs = []
-    return "WIP"
+    
+    # Check that we are in edit mode
+    if bpy.context.mode != 'EDIT_MESH':
+        msgs.append("Error: Must be in Edit Mode to use this function")
+        return msgs
+    
+    # Set tolerance decimals for comparing vertices
+    tolerance = 8
+
+    # Ensure we are working on the active object and get the mesh
+    obj = bpy.context.active_object
+    bm = bmesh.from_edit_mesh(obj.data)
+    
+    # Dictionary to store vertex positions and corresponding vertices
+    position_dict = {}
+    duplicate_count = 0
+    
+    # Loop through all vertices and store them in a dictionary by position
+    for v in bm.verts:
+        position = v.co
+        
+        # Use the position as the key, rounded for tolerance
+        key = (round(position.x, tolerance), round(position.y, tolerance), round(position.z, tolerance))
+        
+        if key not in position_dict:
+            position_dict[key] = [v]
+        else:
+            position_dict[key].append(v)
+    
+    # Deselect all vertices first
+    bpy.ops.mesh.select_all(action='DESELECT')
+
+    # Loop through the dictionary to find duplicate vertices
+    for verts in position_dict.values():
+        if len(verts) > 1:
+            # Select all vertices in the same position
+            for v in verts:
+                v.select = True
+            duplicate_count += len(verts) - 1  # Count the extra vertices as duplicates
+    
+    # Update the mesh to reflect changes in the selection
+    bmesh.update_edit_mesh(obj.data)
+    
+    msgs.append(f"Found {duplicate_count} mergeable (duplicate) vertices.")
+    return msgs
 
 
 # Function to find groups that contain a certain node group

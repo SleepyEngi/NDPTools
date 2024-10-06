@@ -37,11 +37,11 @@ Merge duplicate node groups:
 -Settings:
 -Priority mode: Oldest to make the original take priority, and newest to make the highest .### number take priority
 
-Syncronize data block names
--Syncronizes all data block names to be the same as their object names. Useful for cleaning up incorrect old names in the data dropdown.
+Synchronize data block names
+-Synchronizes all data block names to be the same as their object names. Useful for cleaning up incorrect old names in the data dropdown.
 
 Convert particles to curves:
--Converts a particle system to curves and automatically sets up it's surface object, uv map, and adds a geometry nodes modifier.
+-Converts a particle system to curves and automatically sets up its surface object, uv map, and adds a geometry nodes modifier.
 -If a pre-existing curves object exists, it copies all data and modifiers from that object and restores it to the new curves object.
 -Useful for using the old particle system combing and then quickly converting it back to the new hair curves
 -Settings:
@@ -69,7 +69,7 @@ Select half:
 -Symmetry axis: Tells it which side to actually select
 
 Select asymmetrical vertices:
--Finds all assymetrical vertices that have no matching point on the other side and selects them.
+-Finds all asymmetrical vertices that have no matching point on the other side and selects them.
 -Settings:
 -Symmetry axis: Tells it which side to actually select
 
@@ -83,7 +83,7 @@ Q: Why is it called NDPTools
 A: Because I go by "NDP" on some sites
 =========================================================================================================
 Author's notes
-- Feel free to contribute to the github page.
+- Feel free to contribute to the GitHub page.
 - Feel free to fork, modify and or use this addon as a template for whatever.
 - Please credit me if you use code from my addon
 - Don't feed this to an AI (Of course bots will anyway but I just wanted to make it illegal lmao)
@@ -93,11 +93,11 @@ Author's notes
 =========================================================================================================
 Reporting bugs
 You can write a bug report at https://github.com/SleepyEngi/NDPTools/issues/new
-You can also message me on discord for a more inmediate response, see the contact me section.
+You can also message me on discord for a more immediate response, see the contact me section.
 =========================================================================================================
 Contact me
 You can find me on discord as "ndp"
-You can join my discord server at [Doesnt exist] for support and more 3D resources
+You can join my discord server at [Doesn’t exist] for support and more 3D resources
 =========================================================================================================
 Support me
 If you're well off and can spare a dime, donations are very appreciated at https://ko-fi.com/ndpdesigns
