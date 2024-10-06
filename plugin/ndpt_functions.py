@@ -1,5 +1,6 @@
 import bpy
 import logging
+import os
 
 # Function to toggle all shape keys
 def toggle_shape_keys(**kwargs):
@@ -57,17 +58,15 @@ def sync_data_block_names():
     return msgs
 
 
-# Function to convert particle systems to a curve object with automatically set surface, uv map, and node group
-def convert_particles_to_curves(**kwargs):
+# Conversion operation
+def particles_to_curves(input_particle_system,**kwargs):
     # Initiate logging
     msgs = []
-    
     # Get settings
     nodegroupname = kwargs.get('nodegroupname', "Hair Preset")
     attachmentuvmap = kwargs.get('attachmentuvmap', "UVMap")
     attachcurves =  kwargs.get('attachcurves', True)
     skipchild =  kwargs.get('skipchild', True)
-    
     #--------------------------------------------------------------------------------------------
     
     # Store original mode
@@ -76,31 +75,14 @@ def convert_particles_to_curves(**kwargs):
     # Set mode to object mode
     bpy.ops.object.mode_set(mode='OBJECT')
     
-    # Check that an active object is selected
-    if not bpy.context.active_object:
-        msgs.append("No active object")
-        return msgs
+    # Get particle system
+    particle_system = input_particle_system
     
-    # Get selected object
-    surface_object = bpy.context.active_object
-    
-    # Check that the object is a mesh
-    if surface_object.type != 'MESH':
-        msgs.append("Active object must be a mesh")
-        return msgs
-    
-    # Check that the object has an UV map by that name
-    if not surface_object.data.uv_layers.get(attachmentuvmap):
-        msgs.append("Object has no UV map by specified name")
-        return msgs
-    
-    # Check that the object has particle systems
-    if not surface_object.particle_systems:
-        msgs.append("Object has no particle systems")
-        return msgs
-    
-    # Get active particle system
-    particle_system = surface_object.particle_systems.active
+    # Get the surface object from the particle system
+    surface_object = particle_system.id_data
+        
+    # Change active particle system
+    surface_object.particle_systems.active_index = surface_object.particle_systems.find(particle_system.name)
     
     # Save particle system child type, we set it back at the end
     particle_system_childtype = particle_system.settings.child_type
@@ -114,7 +96,8 @@ def convert_particles_to_curves(**kwargs):
         if modifier.type == "PARTICLE_SYSTEM":
             if modifier.particle_system == particle_system:
                 particle_system_modifier = modifier
-                particle_system_modifier.name = "Test"
+                # OCD rename modifiers to particle system name sorry if u didnt want lol
+                particle_system_modifier.name = particle_system.name
     
     
     # Force set particle system to visible
@@ -125,25 +108,17 @@ def convert_particles_to_curves(**kwargs):
     preexisting = False
     # Detect pre-exising curves object
     if bpy.data.objects.get(particle_system.name):
+        # Found pre existing
         preexisting = True
+        
+        # Save old object
         haircurvesobjectold = bpy.data.objects.get(particle_system.name)
         
-        # Rename old hair curves object
+        # Rename old hair curves object to indicate its old
         haircurvesobjectold.name = particle_system.name + "_Old"
         
         # Get collections from old hair curves object
         haircollections = haircurvesobjectold.users_collection
-        
-        # Get hair preset name from old hair curves object
-        nodegroupname = haircurvesobjectold.modifiers[0].node_group.name
-    
-    if preexisting == False:
-        # Check that the default hair preset exists
-        # Skip if string is empty
-        if nodegroupname != "" and nodegroupname != "None" and nodegroupname != "none":
-            if not bpy.data.node_groups.get(nodegroupname):
-                msgs.append("Could not find node group")
-                return msgs
     
     #--------------------------------------------------------------------------------------------
     # New hair curves object setup
@@ -239,9 +214,10 @@ def convert_particles_to_curves(**kwargs):
     #--------------------------------------------------------------------------------------------
     # Add hair curves geometry nodes preset
     if preexisting == False and (nodegroupname != "" and nodegroupname != "None" and nodegroupname != "none"):
-        # Add new hair curves object geometry nodes preset
-        modifier_nodes_new = haircurvesobjectnew.modifiers.new(name=nodegroupname, type='NODES')
-        modifier_nodes_new.node_group = bpy.data.node_groups.get(nodegroupname)
+        if bpy.data.node_groups.get(nodegroupname):
+            # Add new hair curves object geometry nodes preset
+            modifier_nodes_new = haircurvesobjectnew.modifiers.new(name=nodegroupname, type='NODES')
+            modifier_nodes_new.node_group = bpy.data.node_groups.get(nodegroupname)
     
     #--------------------------------------------------------------------------------------------
     # Get data to copy
@@ -311,12 +287,101 @@ def convert_particles_to_curves(**kwargs):
     return msgs
 
 
-# Function to convert curves back to a particle system and automatically make one if there  isn't one
-def convert_curves_to_particles():
+# Function for converting one particle system
+def convert_particles_to_curves(**kwargs):
     # Initiate logging
     msgs = []
     
-    return "WIP"
+    # Get settings
+    input_nodegroupname = kwargs.get('nodegroupname', "Hair Preset")
+    input_attachmentuvmap = kwargs.get('attachmentuvmap', "UVMap")
+    input_attachcurves =  kwargs.get('attachcurves', True)
+    input_skipchild =  kwargs.get('skipchild', True)
+    
+    # Check that an active object is selected
+    if not bpy.context.active_object:
+        msgs.append("No active object")
+        return msgs
+    
+    # Get selected object
+    surface_object = bpy.context.active_object
+    
+    # Check that the object is a mesh
+    if surface_object.type != 'MESH':
+        msgs.append("Active object must be a mesh")
+        return msgs
+    
+    # Check that the object has an UV map by that name
+    if not surface_object.data.uv_layers.get(input_attachmentuvmap):
+        msgs.append("Object has no UV map by specified name")
+        return msgs
+    
+    # Check that the object has particle systems
+    if not surface_object.particle_systems:
+        msgs.append("Object has no particle systems")
+        return msgs
+    
+    # Get active particle system
+    particle_system = surface_object.particle_systems.active
+    
+    result = particles_to_curves(particle_system,nodegroupname = input_nodegroupname, attachmentuvmap = input_attachmentuvmap, attachcurves = input_attachcurves, skipchild = input_skipchild)
+    msgs.append(result)
+    
+    return msgs
+    
+
+# Function to convert all particle systems directly into equivalent curves objects
+def convert_particles_all(**kwargs):
+    # Initiate logging
+    msgs = []
+    converted_count = 0  # Counter for converted particle systems
+    
+    # Get settings
+    input_nodegroupname = kwargs.get('nodegroupname', "Hair Preset")
+    input_attachmentuvmap = kwargs.get('attachmentuvmap', "UVMap")
+    input_attachcurves = kwargs.get('attachcurves', True)
+    input_skipchild = kwargs.get('skipchild', True)
+    
+    # Check that an active object is selected
+    if not bpy.context.active_object:
+        msgs.append("No active object")
+        return msgs
+    
+    # Get selected object
+    surface_object = bpy.context.active_object
+    
+    # Check that the object is a mesh
+    if surface_object.type != 'MESH':
+        msgs.append("Active object must be a mesh")
+        return msgs
+    
+    # Check that the object has a UV map by that name
+    if not surface_object.data.uv_layers.get(input_attachmentuvmap):
+        msgs.append("Object has no UV map by specified name")
+        return msgs
+    
+    # Check that the object has particle systems
+    if not surface_object.particle_systems:
+        msgs.append("Object has no particle systems")
+        return msgs
+    
+    # Iterate through all particle systems and convert them to curves
+    for particle_system in surface_object.particle_systems:
+        result = particles_to_curves(
+            particle_system,
+            nodegroupname=input_nodegroupname,
+            attachmentuvmap=input_attachmentuvmap,
+            attachcurves=input_attachcurves,
+            skipchild=input_skipchild
+        )
+        
+        # Log count
+        converted_count += 1
+    
+    # Add a final message with the total count
+    msgs.append(f"Total particle systems converted: {converted_count}")
+    
+    return msgs
 
 
 # Function to apply all armature modifers of all children objects of an armature, and re-add them (Optional)
@@ -486,6 +551,7 @@ def convert_scale_to_loc():
 
 
 # Function to select half of the vertices of a model
+# WIP
 def select_model_half(**kwargs):
     # Initiate logging
     msgs = []
@@ -498,6 +564,7 @@ def select_model_half(**kwargs):
 
 
 # Function to select asymmetric vertices
+# WIP
 def select_asymmetrical_vertices(**kwargs):
     # Initiate logging
     msgs = []
@@ -509,6 +576,7 @@ def select_asymmetrical_vertices(**kwargs):
 
 
 # Function to select half of the vertices of a model
+# WIP
 def select_mergeable_vertices():
     # Initiate logging
     msgs = []
@@ -568,6 +636,7 @@ def node_group_list_parents(**kwargs):
 
 
 # Function to replace duplicate node groups that end in .001 with the original
+# WIP
 def node_group_merge_duplicates(**kwargs):
     # Initiate logging
     msgs = []
@@ -584,6 +653,9 @@ def node_group_merge_duplicates(**kwargs):
 
 # Function to select similar nodes in the current editor
 def nodes_select_similar():
+    # Initiate logging
+    msgs = []
+    
     # get all node editor windows and the node groups open in them
     nodegroups = [editor.spaces.active.edit_tree.nodes for editor in bpy.context.window_manager.windows[0].screen.areas if editor.type == 'NODE_EDITOR']
     
@@ -605,6 +677,121 @@ def nodes_select_similar():
                 else:
                     node.select = True
     return "Selected all similar nodes"
+
+
+# Function to merge selected objects with a geometry nodes group
+# WIP
+def join_selected_objects_with_geometry_nodes(**kwargs):
+    # Initiate logging
+    msgs = []
+    
+    # Retrieve the keyword argument for differentiating materials, default to True
+    differentiate_materials = kwargs.get('differentiate_materials', True)
+    
+    # Get the active object
+    active_obj = bpy.context.view_layer.objects.active
+    
+    # Get all selected objects
+    selected_objects = [obj for obj in bpy.context.selected_objects]
+    
+    # Check if we have an active object and at least one selected object
+    if not active_obj or not selected_objects:
+        msgs.append("Please ensure there is an active object and other selected objects.")
+        return msgs
+    
+    # Dictionary to hold objects grouped by their materials
+    material_objects_dict = {}
+    
+    # Put then into dictionary sorted by material
+    if differentiate_materials:
+        # Organize objects by material
+        for obj in selected_objects:
+            for mat in obj.data.materials:
+                if mat.name not in material_objects_dict:
+                    material_objects_dict[mat.name] = []
+                material_objects_dict[mat.name].append(obj)
+    else:
+        # If not differentiating materials, treat all objects as having the same material
+        material_objects_dict['Combined'] = selected_objects
+    
+    # List to hold all combined objects created
+    combined_objects = []
+    
+    # Process each group of objects by their material
+    for mat_name, objs in material_objects_dict.items():
+        # Deselect all objects
+        bpy.ops.object.select_all(action='DESELECT')
+        # Select the first object in the current material group
+        objs[0].select_set(True)
+        # Make it the active object
+        bpy.context.view_layer.objects.active = objs[0]
+        # Duplicate the active object
+        bpy.ops.object.duplicate()
+        # The duplicated object is now the active object
+        combined_obj = bpy.context.view_layer.objects.active
+        # Rename the duplicated object to indicate it is combined with a specific material
+        combined_obj.name = "Combined_" + mat_name
+        # Add the combined object to our list
+        combined_objects.append(combined_obj) # why do we need to do this?
+        
+        # Remove any modifiers the duplicated object had
+        while combined_obj.modifiers:
+            bpy.ops.object.modifier_remove(modifier=combined_obj.modifiers[0].name)
+        
+        # Add a Geometry Nodes modifier to the duplicated object and name it "Join Curves"
+        modifier = combined_obj.modifiers.new(name="Join Curves", type='NODES')
+        
+        # Create a new node group if it doesn't already exist
+        if not modifier.node_group:
+            node_group = bpy.data.node_groups.new(name="GeometryNodesGroup_" + mat_name, type='GeometryNodeTree')
+            modifier.node_group = node_group
+
+        # Clear existing nodes in the node group
+        node_group.nodes.clear()
+        
+        # Create a Join Geometry node to join multiple geometries
+        join_geometry_node = node_group.nodes.new(type='GeometryNodeJoinGeometry')
+        # Create an Output node to output the final geometry
+        output_node = node_group.nodes.new(type='NodeGroupOutput')
+        # Create an Input node to accept input geometries
+        group_input = node_group.nodes.new(type='NodeGroupInput')
+        
+        # Position the nodes for better visual arrangement
+        group_input.location = (-600, 0)
+        join_geometry_node.location = (0, 0)
+        output_node.location = (300, 0)
+        
+        # Link the Join Geometry node to the Output node
+        #node_group.links.new(join_geometry_node.outputs["Geometry"], output_node.inputs["Geometry"])
+        
+        # Only add Object Info nodes and connect them to the Join Geometry node
+        for i, obj in enumerate(objs):
+            # Create an Object Info node to get geometry from each object
+            obj_info_node = node_group.nodes.new(type='GeometryNodeObjectInfo')
+            # Position the Object Info node
+            obj_info_node.location = (-200, -i*200)
+            # Set the object for the Object Info node
+            obj_info_node.inputs[0].default_value = obj
+            # Link the Object Info node's Geometry output to the Join Geometry node's inputs
+            node_group.links.new(obj_info_node.outputs["Geometry"], join_geometry_node.inputs[0])
+            print(f"Linked Object Info node for {obj.name} to Join Geometry node")
+        
+        #Link to output node desu
+        node_group.links.new(join_geometry_node.outputs[0],output_node.inputs[0])
+        
+        # If differentiating materials, assign the current material to the combined object
+        if differentiate_materials:
+            combined_obj.data.materials.append(bpy.data.materials[mat_name])
+    
+    # Hide the original selected objects and disable them from rendering
+    for obj in selected_objects:
+        obj.hide_set(True)
+        obj.hide_render = True
+    
+    # Print a message indicating the number of combined objects created
+    print(f"Created {len(combined_objects)} combined objects for unique materials and hid the original objects.")
+    
+    return "WIP"
 
 
 # Hi

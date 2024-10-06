@@ -58,6 +58,33 @@ class NDPT_OT_ToggleShapeKeys(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Join with geometry nodes
+class NDPT_OT_JoinGeometryNodes(bpy.types.Operator):
+    """ Joins objects using a geometry nodes modifier, which allows joining different object types """
+    bl_idname = "object.joinwithgeometrynodes"
+    bl_label = "Join selected with geometry nodes"
+    bl_options = {"REGISTER", "UNDO"}
+    
+    # Only enable in object mode
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "OBJECT"
+    
+    # Button is pressed
+    def execute(self, context):
+        # Log settings
+        self.report({'INFO'},f"Joining selected objects")
+        logging.info(f"Joining selected objects")
+        logging.info(f"settings:")
+        logging.info(f"Differentiate materials: {context.scene.NDPT_OT_JoinGeometryNodes_DifferentiateMaterials}")
+        
+        # Run the function
+        result = ndpt_functions.join_selected_objects_with_geometry_nodes(DifferentiateMaterials = context.scene.NDPT_OT_JoinGeometryNodes_DifferentiateMaterials)
+        self.report({'INFO'},str(result))
+        
+        return {'FINISHED'}
+
+
 # Synchronize data block names operator
 class NDPT_OT_SyncDataNames(bpy.types.Operator):
     """ Rename object data blocks to be the same as the object name """
@@ -113,10 +140,10 @@ class NDPT_OT_ConvertParticlesToCurves(bpy.types.Operator):
 
 
 # Convert curves to particles 
-class NDPT_OT_ConvertCurvesToParticles(bpy.types.Operator):
-    """ Convert active curves object into a particle system """
-    bl_idname = "object.convertcurvestoparticles"
-    bl_label = "Converts a curves object into a particle system"
+class NDPT_OT_ConvertParticlesAll(bpy.types.Operator):
+    """ Convert all particle systems of the selected object to curves """
+    bl_idname = "object.convertparticlesall"
+    bl_label = "Convert all particle systems of an object to curves"
     bl_options = {"REGISTER", "UNDO"}
     
     # Only enable in object mode
@@ -126,11 +153,11 @@ class NDPT_OT_ConvertCurvesToParticles(bpy.types.Operator):
     
     # Button is pressed
     def execute(self, context):
-        self.report({'INFO'},f"Converting curves object into a particle system")
-        logging.info(f"converting curves to particle system")
+        self.report({'INFO'},f"Converting particle system to visually identical curves object")
+        logging.info(f"converting particles to equivalent curves")
         
         # Run the function
-        result = ndpt_functions.convert_curves_to_particles()
+        result = ndpt_functions.convert_particles_all()
         self.report({'INFO'},str(result))
         
         return {'FINISHED'}
@@ -357,11 +384,43 @@ class NDPT_OT_FindNodeParents(bpy.types.Operator):
 
 # --------------------------------------------------------------------------------
 
-# Function to dynamically get all node groups in the scene
-def get_node_groups(self, context):
-    items = []
+# Function to dynamically fetch all node groups in the scene
+def get_node_groups(node_type="BOTH"):
+    items = [("None", "None", "No node group selected")]  # Add "None" as the first option
+    
+    # Check the filtering option and gather appropriate node groups
     for node_group in bpy.data.node_groups:
-        items.append((node_group.name, node_group.name, ""))
+        if node_type == "BOTH":
+            items.append((node_group.name, node_group.name, ""))
+        elif node_type == "GEOMETRY" and node_group.type == 'GEOMETRY':
+            items.append((node_group.name, node_group.name, ""))
+        elif node_type == "SHADER" and node_group.type == 'SHADER':
+            items.append((node_group.name, node_group.name, ""))
+    
+    return items
+
+# Get all node groups in the scene
+def get_all_node_groups(sef,context):
+    items = get_node_groups(node_type = "BOTH")
+    return items
+
+# Get geometry nodes groups
+def get_geometry_node_groups(self,context):
+    items = get_node_groups(node_type = "GEOMETRY")
+    return items
+    
+# Function to retrieve UV maps from the active object
+def get_uv_maps(self, context):
+    items = []
+    obj = context.object
+    
+    # Check if the active object has mesh data and UV maps
+    if obj and obj.type == 'MESH' and obj.data.uv_layers:
+        for uv in obj.data.uv_layers:
+            items.append((uv.name, uv.name, ""))
+    else:
+        items.append(("None", "None", "No UV maps found"))
+
     return items
 
 # --------------------------------------------------------------------------------
@@ -394,6 +453,15 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
         
         # Button Settings
         box.prop(context.scene, "NDPT_OT_ToggleShapeKeys_ToggleAll")
+        
+        # Separate
+        col.separator()
+        
+        # Button
+        prop = box.operator(NDPT_OT_JoinGeometryNodes.bl_idname, text="Join with geometry nodes")
+        
+        # Button Settings
+        box.prop(context.scene, "NDPT_OT_JoinGeometryNodes_DifferentiateMaterials")
         
         # Separate
         col.separator()
@@ -477,7 +545,7 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
         col.separator()
         
         # Button
-        prop = box.operator(NDPT_OT_ConvertCurvesToParticles.bl_idname, text="Convert curves to particles")
+        prop = box.operator(NDPT_OT_ConvertParticlesAll.bl_idname, text="Convert all particle systems to curves")
         
         # Separate
         col.separator()
@@ -551,9 +619,10 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
 classes = [
     NDPT_PT_Sidebar,
     NDPT_OT_ToggleShapeKeys,
+    NDPT_OT_JoinGeometryNodes,
     NDPT_OT_SyncDataNames,
     NDPT_OT_ConvertParticlesToCurves,
-    NDPT_OT_ConvertCurvesToParticles,
+    NDPT_OT_ConvertParticlesAll,
     NDPT_OT_ApplyArmatureModifiers,
     NDPT_OT_ConvertScaleToLocation,
     NDPT_OT_SelectHalf,
@@ -579,20 +648,30 @@ def register():
         default = True
     )
     
-    # String Property
-    # Convert particle system to curves: default preset name
-    bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup = bpy.props.StringProperty(
-        name = '',
-        description = "Name of the default node group to apply if there isn't a current curves object with one",
-        default = "Hair Preset"
+    # Boolean Property
+    # Join with geometry nodes: Differentiate materials
+    bpy.types.Scene.NDPT_OT_JoinGeometryNodes_DifferentiateMaterials = bpy.props.BoolProperty(
+        name='Differentiate materials',
+        description = "Differentiate materials when joining objects, having one object per material. Useful for curves which can only have one material",
+        default = True
     )
     
-    # String Property
-    # Convert particle system to curves: default UV map name
-    bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap = bpy.props.StringProperty(
+    # Enum property
+    # Convert particle system to curves: default preset name
+    bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup = bpy.props.EnumProperty(
         name = '',
-        description = "Name of the UV map to attach the curves to",
-        default = "UVMap"
+        description = "Name of the default node group to apply if there isn't a current curves object with one",
+        items = get_geometry_node_groups,
+        default = 0
+    )
+    
+    # Enum property
+    # List of uv maps of current active object
+    bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap = bpy.props.EnumProperty(
+        name = '',
+        description = "List of UV maps in the active object",
+        items = get_uv_maps,  # Function to get UV maps
+        default = 0  # First UV map as default (or "None" if no UV maps)
     )
     
     # Boolean Property
@@ -641,7 +720,8 @@ def register():
     bpy.types.Scene.NDPT_OT_FindNodeParents_DefaultNodeGroup = bpy.props.EnumProperty(
         name = '',
         description = "Search which node groups contain this node group",
-        items = get_node_groups,
+        items = get_all_node_groups,
+        default = 0
     )
     
     # Enum Property
@@ -659,6 +739,7 @@ def register():
 def unregister():
     # Unregister button settings
     del bpy.types.Scene.NDPT_OT_ToggleShapeKeys_ToggleAll
+    del bpy.types.Scene.NDPT_OT_JoinGeometryNodes_DifferentiateMaterials
     del bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup
     del bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap
     del bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves
