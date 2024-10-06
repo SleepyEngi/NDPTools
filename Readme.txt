@@ -101,3 +101,4 @@ You can join my discord server at [Doesnt exist] for support and more 3D resourc
 =========================================================================================================
 Support me
 If you're well off and can spare a dime, donations are very appreciated at https://ko-fi.com/ndpdesigns
+Or just leave a thanks comment if it was useful! I appreciate it a lot too!

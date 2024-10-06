@@ -679,8 +679,7 @@ def nodes_select_similar():
     return "Selected all similar nodes"
 
 
-# Function to merge selected objects with a geometry nodes group
-# WIP
+# Function to join objects using a geometry nodes group
 def join_selected_objects_with_geometry_nodes(**kwargs):
     # Initiate logging
     msgs = []
@@ -732,37 +731,44 @@ def join_selected_objects_with_geometry_nodes(**kwargs):
         # Rename the duplicated object to indicate it is combined with a specific material
         combined_obj.name = "Combined_" + mat_name
         # Add the combined object to our list
-        combined_objects.append(combined_obj) # why do we need to do this?
+        combined_objects.append(combined_obj)
         
         # Remove any modifiers the duplicated object had
         while combined_obj.modifiers:
             bpy.ops.object.modifier_remove(modifier=combined_obj.modifiers[0].name)
         
-        # Add a Geometry Nodes modifier to the duplicated object and name it "Join Curves"
-        modifier = combined_obj.modifiers.new(name="Join Curves", type='NODES')
+        # Add a Geometry Nodes modifier to the duplicated object and name it "Join Objects"
+        modifier = combined_obj.modifiers.new(name="Join Objects", type='NODES')
         
         # Create a new node group if it doesn't already exist
-        if not modifier.node_group:
-            node_group = bpy.data.node_groups.new(name="GeometryNodesGroup_" + mat_name, type='GeometryNodeTree')
-            modifier.node_group = node_group
+        bpy.ops.node.new_geometry_node_group_assign()
+        node_group = combined_obj.modifiers[0].node_group
 
-        # Clear existing nodes in the node group
-        node_group.nodes.clear()
+        # Ensure not to clear the node group, as the output node may be auto-created
+        for node in node_group.nodes:
+            if node.type != 'GROUP_OUTPUT':
+                node_group.nodes.remove(node)
         
-        # Create a Join Geometry node to join multiple geometries
-        join_geometry_node = node_group.nodes.new(type='GeometryNodeJoinGeometry')
-        # Create an Output node to output the final geometry
-        output_node = node_group.nodes.new(type='NodeGroupOutput')
-        # Create an Input node to accept input geometries
-        group_input = node_group.nodes.new(type='NodeGroupInput')
-        
-        # Position the nodes for better visual arrangement
-        group_input.location = (-600, 0)
-        join_geometry_node.location = (0, 0)
+        # Get the existing output node (assuming there's only one output node)
+        output_node = None
+        for node in node_group.nodes:
+            if node.type == 'GROUP_OUTPUT':
+                output_node = node
+                break
+
+        # Position the output node
         output_node.location = (300, 0)
-        
-        # Link the Join Geometry node to the Output node
-        #node_group.links.new(join_geometry_node.outputs["Geometry"], output_node.inputs["Geometry"])
+
+        # Create the Join Geometry node to join multiple geometries
+        join_geometry_node = node_group.nodes.new(type='GeometryNodeJoinGeometry')
+        join_geometry_node.location = (0, 0)
+
+        # Access sockets by index instead of name
+        # Link the Join Geometry node's output to the output node's geometry input
+        if join_geometry_node.outputs and output_node.inputs:
+            node_group.links.new(join_geometry_node.outputs[0], output_node.inputs[0])  # First output/input is typically 'Geometry'
+        else:
+            raise RuntimeError("Join Geometry node or Output node doesn't have appropriate sockets.")
         
         # Only add Object Info nodes and connect them to the Join Geometry node
         for i, obj in enumerate(objs):
@@ -774,9 +780,6 @@ def join_selected_objects_with_geometry_nodes(**kwargs):
             obj_info_node.inputs[0].default_value = obj
             # Link the Object Info node's Geometry output to the Join Geometry node's inputs
             node_group.links.new(obj_info_node.outputs["Geometry"], join_geometry_node.inputs[0])
-        
-        #Link to output node desu
-        node_group.links.new(join_geometry_node.outputs[0],output_node.inputs[0])
         
         # If differentiating materials, assign the current material to the combined object
         if differentiate_materials:
