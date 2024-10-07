@@ -7,7 +7,7 @@ version = "1.0.0"
 
 name = "NDPTools: Scene clean up tools"
 
-tagline = "Adds various buttons to help clean up the scene, such as locating all node groups that contain a certain node group, cleaning up all duplicates with .001 names, syncronysing data names and more"
+tagline = "Adds a panel for cleaning up the scene's data, node groups, etc"
 
 maintainer = "NDP <@ndp>"
 
