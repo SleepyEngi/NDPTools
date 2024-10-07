@@ -1,0 +1,28 @@
+# Addon manifest file
+schema_version = "1.0.0"
+
+id = "ndptools"
+
+version = "1.0.0"
+
+name = "NDPTools: Scene clean up tools"
+
+tagline = "Adds various buttons to help clean up the scene, such as locating all node groups that contain a certain node group, cleaning up all duplicates with .001 names, syncronysing data names and more"
+
+maintainer = "NDP <@ndp>"
+
+type = "add-on"
+
+website = "https://github.com/SleepyEngi/NDPTools"
+
+tags = ["Scene","User Interface"]
+
+blender_version_min = "4.2.0"
+# blender_version_max = "5.1.0"
+
+license = ["SPDX:GPL-3.0-or-later",]
+
+# platforms = ["windows-x64", "macos-arm64", "linux-x64"]
+
+# [permissions]
+files = "Required to import the 'Hair curve profile' node if it is missing from the scene when using the 'Convert hair' button"
