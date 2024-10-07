@@ -197,9 +197,9 @@ class NDPT_OT_ApplyArmatureModifiers(bpy.types.Operator):
 
 # Convert scale to location operator
 class NDPT_OT_ConvertScaleToLocation(bpy.types.Operator):
-    """ Converts scale bone pose transforms into location transforms in the same visual location """
+    """ Converts scale bone pose transforms into location transforms in the same visual location. Can take a long time for large armatures """
     bl_idname = "ndptarmature.convertscaletopose"
-    bl_label = "Convert bone scale transforms into location transforms"
+    bl_label = "Convert bone scale transforms into location transforms. Can take a long time for large armatures"
     bl_options = {"REGISTER", "UNDO"}
     
     # Only enable in object mode
