@@ -3,7 +3,7 @@ bl_info = {
     "name" : "NDP Tools Addon",
     "description" : "Adds a set of buttons on the viewport for managing and cleaning up the scene, among other miscellaneous buttons.",
     "author" : "NDP",
-    "version" : (0, 0, 1),
+    "version" : (1, 0, 0),
     "blender" : (4, 1, 0),
     "location" : "View3D",
     "warning" : "",
