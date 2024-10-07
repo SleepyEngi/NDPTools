@@ -797,19 +797,80 @@ def node_group_list_parents(**kwargs):
 
 
 # Function to replace duplicate node groups that end in .001 with the original
-# WIP
 def node_group_merge_duplicates(**kwargs):
     # Initiate logging
     msgs = []
     
     # Get settings
     priority = kwargs.get('prioritymode', "Oldest")
-
-    for nodegroup in bpy.data.node_groups:
-        if nodegroup.name[-4] == '.' and nodegroup.name[-3:].isdigit():
-            print("Node group is a duplicate")
     
-    return "WIP"
+    # Dictionary to store grouped node groups
+    node_group_dict = {}
+    
+    # Step 1: Group node groups by their base name (before the .### suffix)
+    for nodegroup in bpy.data.node_groups:
+        if len(nodegroup.name) > 4 and nodegroup.name[-4] == '.' and nodegroup.name[-3:].isdigit():
+            base_name = nodegroup.name[:-4]  # Strip the .### suffix
+        else:
+            base_name = nodegroup.name
+        
+        if base_name not in node_group_dict:
+            node_group_dict[base_name] = []
+        node_group_dict[base_name].append(nodegroup)
+    
+    # Step 2: Sort and determine which node group to keep
+    for base_name, group_list in node_group_dict.items():
+        if len(group_list) > 1:  # Only consider groups with duplicates
+            if priority == "Oldest":
+                # Sort by name to get the original or the lowest .###
+                group_list.sort(key=lambda ng: ng.name)
+            elif priority == "Newest":
+                # Sort by name to get the highest .### number
+                group_list.sort(key=lambda ng: ng.name, reverse=True)
+            
+            # The first element after sorting will be the prioritized one
+            main_node_group = group_list[0]
+            
+            # Step 3: Add .old suffix to all other duplicates
+            for duplicate in group_list[1:]:
+                duplicate.name += ".old"  # Add .old suffix to duplicates
+                logging.info(f"Renamed {duplicate.name} to {duplicate.name}")
+
+            # If we're prioritizing the newest, handle renaming accordingly
+            if priority == "Newest":
+                # Check if the main node group (oldest one in "Newest" mode) has a .###
+                #if not (len(main_node_group.name) > 4 and main_node_group.name[-4] == '.' and main_node_group.name[-3:].isdigit()):
+                # Add ".old" to the oldest node if it doesn't have .###
+                if len(main_node_group.name) > 4 and main_node_group.name[-4] == '.' and main_node_group.name[-3:].isdigit():
+                    main_node_group.name = main_node_group.name[:-4]
+                    logging.info(f"Renamed main node group to {main_node_group.name}")
+
+            # Step 4: Replace references to duplicates in all node groups and materials
+            for duplicate in group_list[1:]:
+                # Iterate through node groups
+                for other_group in bpy.data.node_groups:
+                    for node in other_group.nodes:
+                        if node.type == 'GROUP' and node.node_tree == duplicate:
+                            node.node_tree = main_node_group
+                            logging.info(f"Replaced duplicate {duplicate.name} with {main_node_group.name} in node group {other_group.name}")
+                
+                # Iterate through materials
+                for material in bpy.data.materials:
+                    if material.use_nodes:
+                        for node in material.node_tree.nodes:
+                            if node.type == 'GROUP' and node.node_tree == duplicate:
+                                node.node_tree = main_node_group
+                                logging.info(f"Replaced duplicate {duplicate.name} with {main_node_group.name} in material {material.name}")
+
+        else:  # No duplicates, but has a .00# suffix
+            single_group = group_list[0]
+            if len(single_group.name) > 4 and single_group.name[-4] == '.' and single_group.name[-3:].isdigit():
+                # Rename to remove the .### suffix
+                single_group.name = base_name
+                logging.info(f"Renamed non-duplicate node group {single_group.name} to {base_name}")
+
+    msgs.append("Finished merging and renaming node groups")
+    return msgs
 
 
 # Function to select similar nodes in the current editor
