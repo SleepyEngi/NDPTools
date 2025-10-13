@@ -25,4 +25,4 @@ license = ["SPDX:GPL-3.0-or-later",]
 # platforms = ["windows-x64", "macos-arm64", "linux-x64"]
 
 [permissions]
-files = "Required to import the 'Hair curve profile' node if it is missing from the scene when using the 'Convert hair' button"
+files = "Imports 'hair curve profile' node from default Blender assets"
