@@ -79,8 +79,8 @@ Select mergeable vertices:
 
 =========================================================================================================
 FAQ
-Q: Why is it called NDPTools
-A: Because I go by "NDP" on some sites
+Q: What does 'NDPTools' mean?
+A: 'NDP' is my username on some websites.
 =========================================================================================================
 Author's notes
 - Feel free to contribute to the GitHub page.
@@ -97,7 +97,7 @@ You can also message me on discord for a more immediate response, see the contac
 =========================================================================================================
 Contact me
 You can find me on discord as "ndp"
-You can join my discord server at [Doesn’t exist] for support and more 3D resources
+You can join my discord server at [Doesn’t exist] for more information & direct contact
 =========================================================================================================
 Support me
 If you're well off and can spare a dime, donations are very appreciated at https://ko-fi.com/ndpdesigns

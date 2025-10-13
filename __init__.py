@@ -20,11 +20,23 @@ import bpy
 from bpy.types import Operator
 from bpy.types import Panel
 
+
+
+# For importing the functions
+from .plugin import ndpt_functions
+
 # For operators
 import logging
+import sys
 
-# import the functions
-from .plugin import ndpt_functions
+logger = logging.getLogger()
+if not logger.hasHandlers():
+    handler = logging.StreamHandler(stream=sys.stdout)
+    formatter = logging.Formatter('[%(levelname)s] %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
 
 # --------------------------------------------------------------------------------
 # Operators
@@ -370,15 +382,27 @@ class NDPT_OT_FindNodeParents(bpy.types.Operator):
     
     # Button is pressed
     def execute(self, context):
+        # Start
+        scene = context.scene
+        nodegroupname = context.scene.NDPT_OT_FindNodeParents_DefaultNodeGroup
+
         # Log settings
         self.report({'INFO'},f"Finding node parents")
         logging.info(f"finding node parents")
         logging.info(f"settings:")
-        logging.info(f"node group name: {context.scene.NDPT_OT_FindNodeParents_DefaultNodeGroup}")
+        logging.info(f"node group name: {nodegroupname}")
+
+        # Clear previous results
+        scene.NDPT_OT_FindNodeParents_Results.clear()
         
         # Run the function
-        result = ndpt_functions.node_group_list_parents(nodegroupname = context.scene.NDPT_OT_FindNodeParents_DefaultNodeGroup)
-        self.report({'INFO'},str(result))
+        results = ndpt_functions.node_group_list_parents(nodegroupname = context.scene.NDPT_OT_FindNodeParents_DefaultNodeGroup)
+        
+        for r in results:
+            item = scene.NDPT_OT_FindNodeParents_Results.add()
+            item.name = r
+        
+        self.report({'INFO'}, f"Found {len(results) - 1} results.")
 
         return {'FINISHED'}
 
@@ -424,15 +448,24 @@ def get_uv_maps(self, context):
 
     return items
 
+# -------------------------------------------------------------------------------
+# UI List for showing node group parent results
+class NDPT_UL_NodeParentResults(bpy.types.UIList):
+    """UI list to show node group parents"""
+    bl_idname = "NDPT_UL_NodeParentResults"
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.label(text=item.name)
+
 # --------------------------------------------------------------------------------
 # Panels
 # Adds panels and buttons in the siderbar that when pressed, run operators and their settings
 
 
-# Sidebar panel definition
-class NDPT_PT_Sidebar(bpy.types.Panel):
+# Sidebar panels definition
+class NDPT_PT_Sidebar_Object(bpy.types.Panel):
     """Creates a new tab in the sidebar"""
-    bl_label = "NDP Tools Menu"
+    bl_label = "NDPTools: Object"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "NDP Tools"
@@ -466,44 +499,7 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
         
         # Separate
         col.separator()
-        
-        #--------------------------------------------------------------------------------------
-        # Geometry nodes
-        
-        # Create a box for separation
-        box = col.box()
-        box.label(text="Nodes")
-        
-        # Button
-        prop = box.operator(NDPT_OT_SelectSimilarNodes.bl_idname, text="Select similar nodes")
-        
-        # Separate
-        col.separator()
-        
-        # Button
-        prop = box.operator(NDPT_OT_FindNodeParents.bl_idname, text="Find Node Group Parents")
-        
-        # Label
-        box.label(text="Node Group:")
-        
-        # Button settings
-        box.prop(context.scene, "NDPT_OT_FindNodeParents_DefaultNodeGroup")
-        
-        # Separate
-        col.separator()
-        
-        # Button
-        prop = box.operator(NDPT_OT_MergeDuplicateNodeGroups.bl_idname, text="Merge duplicate node groups")
-        
-        # Label
-        box.label(text="Priority mode:")
-        
-        # Button settings
-        box.prop(context.scene, "NDPT_OT_MergeDuplicateNodeGroups_PriorityMode")
-        
-        # Separate
-        col.separator()
-        
+
         #--------------------------------------------------------------------------------------
         # Data
         
@@ -516,9 +512,55 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
         
         # Separate
         col.separator()
+
+        #--------------------------------------------------------------------------------------
+        # Edit
         
+        # Create a box for separation
+        box = col.box()
+        box.label(text="Edit mode")
+        
+        # Button
+        prop = box.operator(NDPT_OT_SelectHalf.bl_idname, text="Select half")
+        
+        # Button settings
+        box.prop(context.scene, "NDPT_OT_SelectHalf_SelectCenter")
+        
+        # Label
+        box.label(text="Symmetry axis:")
+        
+        # Button settings
+        box.prop(context.scene, "NDPT_OT_SelectHalf_SymmetryAxis")
+        
+        # Separate
+        col.separator()
+        
+        # Button
+        prop = box.operator(NDPT_OT_SelectAsymmetrical.bl_idname, text="Select asymmetrical vertices")
+        
+        # Separate
+        col.separator()
+        
+        # Button
+        prop = box.operator(NDPT_OT_SelectMergeable.bl_idname, text="Select mergeable vertices")
+        
+        # Separate
+        col.separator()
+
+class NDPT_PT_Sidebar_Hair(bpy.types.Panel):
+    """Creates a new tab in the sidebar"""
+    bl_label = "NDPTools: Hair"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "NDP Tools"
+    
+    # Draw
+    def draw(self, context):
         #--------------------------------------------------------------------------------------
         # Convert Hair
+
+        # Define Colums
+        col = self.layout.column(align=True)
         
         # Create a box for separation
         box = col.box()
@@ -553,9 +595,21 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
         
         # Separate
         col.separator()
-        
+
+class NDPT_PT_Sidebar_Armature(bpy.types.Panel):
+    """Creates a new tab in the sidebar"""
+    bl_label = "NDPTools: Armature"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "NDP Tools"
+    
+    # Draw
+    def draw(self, context):
         #--------------------------------------------------------------------------------------
         # Armature
+
+        # Define Colums
+        col = self.layout.column(align=True)
         
         # Create a box for separation
         box = col.box()
@@ -578,42 +632,64 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
         
         # Separate
         col.separator()
+
+class NDPT_PT_Sidebar_Nodes(bpy.types.Panel):
+    """Creates a new tab in the sidebar"""
+    bl_label = "NDPTools: Nodes"
+    bl_space_type = "NODE_EDITOR"
+    bl_region_type = "UI"
+    bl_category = "NDP Tools"
+    
+    # Draw
+    def draw(self, context):
         
         #--------------------------------------------------------------------------------------
-        # Edit
+        # Geometry nodes
         
+        # Define Colums
+        col = self.layout.column(align=True)
+
         # Create a box for separation
         box = col.box()
-        box.label(text="Edit mode")
+        box.label(text="Nodes")
         
         # Button
-        prop = box.operator(NDPT_OT_SelectHalf.bl_idname, text="Select half")
+        prop = box.operator(NDPT_OT_SelectSimilarNodes.bl_idname, text="Select similar nodes")
         
-        # Button settings
-        box.prop(context.scene, "NDPT_OT_SelectHalf_SelectCenter")
+        # Separate
+        col.separator()
+        
+        # Button
+        prop = box.operator(NDPT_OT_FindNodeParents.bl_idname, text="Find Node Group Parents")
         
         # Label
-        box.label(text="Symmetry axis:")
+        box.label(text="Node Group:")
         
         # Button settings
-        box.prop(context.scene, "NDPT_OT_SelectHalf_SymmetryAxis")
+        box.prop(context.scene, "NDPT_OT_FindNodeParents_DefaultNodeGroup")
         
         # Separate
         col.separator()
-        
-        # Button
-        prop = box.operator(NDPT_OT_SelectAsymmetrical.bl_idname, text="Select asymmetrical vertices")
-        
-        # Separate
-        col.separator()
-        
-        # Button
-        prop = box.operator(NDPT_OT_SelectMergeable.bl_idname, text="Select mergeable vertices")
-        
-        # Separate
-        col.separator()
-        
 
+        # Show results list
+        if len(context.scene.NDPT_OT_FindNodeParents_Results) > 0:
+            box.label(text="Results:")
+            box.template_list("NDPT_UL_NodeParentResults", "", context.scene, "NDPT_OT_FindNodeParents_Results", context.scene, "NDPT_OT_FindNodeParents_Results_Index")
+        else:
+            box.label(text="No results yet.")
+        
+        # Button
+        prop = box.operator(NDPT_OT_MergeDuplicateNodeGroups.bl_idname, text="Merge duplicate node groups")
+        
+        # Label
+        box.label(text="Priority mode:")
+        
+        # Button settings
+        box.prop(context.scene, "NDPT_OT_MergeDuplicateNodeGroups_PriorityMode")
+        
+        # Separate
+        col.separator()
+        
 
 # --------------------------------------------------------------------------------
 # Initiate addon
@@ -621,7 +697,10 @@ class NDPT_PT_Sidebar(bpy.types.Panel):
 
 # List of enabled classes
 classes = [
-    NDPT_PT_Sidebar,
+    NDPT_PT_Sidebar_Object,
+    NDPT_PT_Sidebar_Hair,
+    NDPT_PT_Sidebar_Armature,
+    NDPT_PT_Sidebar_Nodes,
     NDPT_OT_ToggleShapeKeys,
     NDPT_OT_JoinGeometryNodes,
     NDPT_OT_SyncDataNames,
@@ -635,6 +714,7 @@ classes = [
     NDPT_OT_SelectSimilarNodes,
     NDPT_OT_FindNodeParents,
     NDPT_OT_MergeDuplicateNodeGroups,
+    NDPT_UL_NodeParentResults,
 ]
 
 # Run when enabling addon
@@ -735,6 +815,10 @@ def register():
         items = get_all_node_groups,
         default = 0
     )
+
+    # Collection property for node parent search results
+    bpy.types.Scene.NDPT_OT_FindNodeParents_Results = bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
+    bpy.types.Scene.NDPT_OT_FindNodeParents_Results_Index = bpy.props.IntProperty(default=0)
     
     # Enum Property
     # Merge duplicate node groups: Priority mode
@@ -762,6 +846,9 @@ def unregister():
     del bpy.types.Scene.NDPT_OT_SelectHalf_SymmetryAxis
     del bpy.types.Scene.NDPT_OT_FindNodeParents_DefaultNodeGroup
     del bpy.types.Scene.NDPT_OT_MergeDuplicateNodeGroups_PriorityMode
+
+    del bpy.types.Scene.NDPT_OT_FindNodeParents_Results
+    del bpy.types.Scene.NDPT_OT_FindNodeParents_Results_Index
     
     # Unregister classes
     for cls in classes:

@@ -3,7 +3,7 @@ schema_version = "1.0.0"
 
 id = "ndptools"
 
-version = "1.0.0"
+version = "1.0.1"
 
 name = "NDPTools: Scene clean up tools"
 
@@ -24,5 +24,5 @@ license = ["SPDX:GPL-3.0-or-later",]
 
 # platforms = ["windows-x64", "macos-arm64", "linux-x64"]
 
-# [permissions]
+[permissions]
 files = "Required to import the 'Hair curve profile' node if it is missing from the scene when using the 'Convert hair' button"

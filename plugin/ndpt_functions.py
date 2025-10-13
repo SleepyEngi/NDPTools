@@ -47,13 +47,24 @@ def toggle_shape_keys(**kwargs):
 def sync_data_block_names():
     # Initiate logging
     msgs = []
-    
-    # Get a list of all objects
+
     for obj in bpy.data.objects:
-        # Check that it is not a nonetype object
-        if obj.type != 'EMPTY':
-            # Rename the data to match the object name
+        # Skip empties
+        if obj.type == 'EMPTY':
+            logging.info(f"'{obj.name}' is empty and has no data, skipping")
+            continue
+
+        # Skip linked or library overridden data — we shouldn't rename those
+        if obj.library or obj.override_library:
+            logging.info(f"Data '{obj.data.name}' is a linked or a library override, skipping")
+            continue
+
+        # Skip instanced data (shared among multiple objects)
+        # Only rename if this data is used by one object
+        if obj.data and obj.data.users == 1:
             obj.data.name = obj.name
+        else:
+            logging.info(f"Data '{obj.data.name}' has multiple users, skipping")
     
     # End
     msgs.append("Renamed data blocks")
@@ -79,6 +90,12 @@ def particles_to_curves(input_particle_system,**kwargs):
     
     # Get particle system
     particle_system = input_particle_system
+
+    # Ensure particle system is hair
+    if particle_system.settings.type != 'HAIR':
+        msgs.append(f"Error: Particle system '{particle_system.name}' is not a hair system.")
+        logging.info(msgs[-1])
+        return msgs
     
     # Get the surface object from the particle system
     surface_object = particle_system.id_data
@@ -163,13 +180,19 @@ def particles_to_curves(input_particle_system,**kwargs):
     if bpy.data.node_groups.get("Set Hair Curve Profile") == None:
 
         # Report that import is necessary
-        logging.info(f"Hair Curve Profile node group is missing. Importing it now.")
+        logging.info(f"Hair Curve Profile node group is missing. Attempting to import it now.")
 
         # Get the blender directory of the current version
         blender_directory = bpy.utils.resource_path('LOCAL')
 
         # File path
-        source_file = source_file = os.path.join(blender_directory, "datafiles", "assets\\geometry_nodes\\procedural_hair_node_assets.blend")
+        source_file = os.path.join(
+            blender_directory,
+            "datafiles",
+            "assets",
+            "geometry_nodes",
+            "procedural_hair_node_assets.blend"
+        )
 
         # Node group to import
         node_group_name = "Set Hair Curve Profile"
@@ -250,16 +273,21 @@ def particles_to_curves(input_particle_system,**kwargs):
         
         # Delete old hair curves object
         bpy.data.objects.remove(haircurvesobjectold)
-        
+            
     if preexisting == False:
-        # Get particle settings material
-        particle_system_material = surface_object.material_slots[surface_object.particle_systems.active.settings.material - 1].material
-        
-        # Add a slot
-        bpy.ops.object.material_slot_add()
-        
-        # Set the material
-        haircurvesobjectnew.data.materials[0] = particle_system_material
+        # Only assign material if surface object has slots and a valid material
+        mat_index = surface_object.particle_systems.active.settings.material - 1
+        if len(surface_object.material_slots) > mat_index >= 0:
+            particle_system_material = surface_object.material_slots[mat_index].material
+            if particle_system_material is not None:
+                # Add a slot to the new hair curves object
+                bpy.ops.object.material_slot_add()
+                # Assign the material
+                haircurvesobjectnew.data.materials[0] = particle_system_material
+            else:
+                logging.warning(f"Material slot {mat_index} on {surface_object.name} is empty, skipping assignment")
+        else:
+            logging.warning(f"Material index {mat_index} out of range for {surface_object.name}, skipping assignment")
     
     #--------------------------------------------------------------------------------------------
     # Finalize & cleanup
@@ -431,6 +459,10 @@ def apply_armature_modifiers(**kwargs):
             armaturechildren.append(ob)
     
     for ob in armaturechildren:
+        if ob.data.users > 1:
+            msgs.append(f"Skipped {ob.name}: has multi-user mesh data")
+            continue
+
         bpy.context.view_layer.objects.active = ob
         # Check if they are parented to the armature, are a mesh, and have modifiers
         modifier_list = []
@@ -461,6 +493,13 @@ def convert_scale_to_loc():
     # Initiate logging
     msgs = []
     
+    # Check object is armature
+    armature_object = bpy.context.active_object
+    if armature_object.type != 'ARMATURE':
+        msgs.append("Active object is not an armature.")
+        logging.warning(f"Active object '{armature_object.name}' is not an armature.")
+        return msgs
+
     # Function for converting scale to visual location transforms in pose mode
     logging.info(f"converting scale transforms to visual location")
 
@@ -472,7 +511,7 @@ def convert_scale_to_loc():
     # Set to pose mode
     bpy.ops.object.mode_set(mode='POSE')
 
-    armature_object = bpy.context.active_object
+    
 
     # Initiate logging variable
     editnumber = 0
@@ -761,23 +800,24 @@ def node_group_list_parents(**kwargs):
                 if node.bl_rna.identifier == 'GeometryNodeGroup' or node.bl_rna.identifier == 'ShaderNodeGroup':
                     if node.node_tree == target_nodegroup:
                         logging.info(f"Node group '{nodegroup.name}' contains '{target_nodegroup.name}'")
+                        msgs.append(f"Node group: {nodegroup.name}")
                         counter = counter + 1
     
-    # Check materials
+    # Iterate over every existing material
     for nodegroup in bpy.data.materials:
         if nodegroup.node_tree and nodegroup.node_tree.nodes:
             for node in nodegroup.node_tree.nodes:
                 if node.bl_rna.identifier == 'GeometryNodeGroup' or node.bl_rna.identifier == 'ShaderNodeGroup':
                     if node.node_tree == target_nodegroup:
                         logging.info(f"Material '{nodegroup.name}' contains '{target_nodegroup.name}'")
+                        msgs.append(f"Material: {nodegroup.name}")
                         counter = counter + 1
-            
     
     # Finalize
     logging.info(f"")
     logging.info(f"There are {counter} instances containing '{target_nodegroup.name}'")
     
-    msgs.append(f"Found {counter} results, check console for detailed list.")
+    msgs.append(f"Total: {counter} results.")
     return msgs
 
 
@@ -904,6 +944,12 @@ def join_selected_objects_with_geometry_nodes(**kwargs):
     if not active_obj or not selected_objects:
         msgs.append("Please ensure there is an active object and other selected objects.")
         return msgs
+
+    # Warn if any object has multiple materials
+    for obj in selected_objects:
+        valid_mats = [m for m in obj.data.materials if m is not None]
+        if len(valid_mats) > 1:
+            msgs.append(f"⚠ Warning: Object '{obj.name}' has multiple materials, which may cause unexpected behavior.")
     
     # Dictionary to hold objects grouped by their materials
     material_objects_dict = {}
@@ -912,10 +958,18 @@ def join_selected_objects_with_geometry_nodes(**kwargs):
     if differentiate_materials:
         # Organize objects by material
         for obj in selected_objects:
-            for mat in obj.data.materials:
-                if mat.name not in material_objects_dict:
-                    material_objects_dict[mat.name] = []
-                material_objects_dict[mat.name].append(obj)
+            valid_mats = [mat for mat in obj.data.materials if mat is not None]
+            # Check no empty material slot
+            if valid_mats:
+                for mat in valid_mats:
+                    if mat.name not in material_objects_dict:
+                        material_objects_dict[mat.name] = []
+                    material_objects_dict[mat.name].append(obj)
+            else:
+                # No material — group them under a special key
+                if "NoMaterial" not in material_objects_dict:
+                    material_objects_dict["NoMaterial"] = []
+                material_objects_dict["NoMaterial"].append(obj)
     else:
         # If not differentiating materials, treat all objects as having the same material
         material_objects_dict['Combined'] = selected_objects
@@ -985,11 +1039,13 @@ def join_selected_objects_with_geometry_nodes(**kwargs):
             obj_info_node.location = (-200, -i*200)
             # Set the object for the Object Info node
             obj_info_node.inputs[0].default_value = obj
+            # Set to relative
+            obj_info_node.transform_space = 'RELATIVE'
             # Link the Object Info node's Geometry output to the Join Geometry node's inputs
             node_group.links.new(obj_info_node.outputs["Geometry"], join_geometry_node.inputs[0])
         
         # If differentiating materials, assign the current material to the combined object
-        if differentiate_materials:
+        if differentiate_materials and mat_name != "NoMaterial":
             combined_obj.data.materials.append(bpy.data.materials[mat_name])
     
     # Hide the original selected objects and disable them from rendering
