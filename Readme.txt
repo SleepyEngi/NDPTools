@@ -1,6 +1,6 @@
 NDPTools: Scene clean up tools
 Author: NDP
-Version: 1.0.0
+Version: 1.0.1
 YYYY-MM-DD: 2024-10-06
 =========================================================================================================
 Download instructions
