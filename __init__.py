@@ -1,4 +1,4 @@
-# Addon information, displays on addons list.
+# Addon information. Displays addon information on pre-extension blender versions. 
 bl_info = {
     "name" : "NDP Tools Addon",
     "description" : "Adds a set of buttons on the viewport for managing and cleaning up the scene, among other miscellaneous buttons.",
@@ -17,33 +17,23 @@ bl_info = {
 import bpy
 
 # For addon operators and panels
-from bpy.types import Operator
-from bpy.types import Panel
+from bpy.types import Operator, Panel
 
 
 
-# For importing the functions
+# Functions & scripts file
 from .plugin import ndpt_functions
 
-# For operators
-import logging
-import sys
-
-logger = logging.getLogger()
-if not logger.hasHandlers():
-    handler = logging.StreamHandler(stream=sys.stdout)
-    formatter = logging.Formatter('[%(levelname)s] %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-
+# Debug Logging
+#import logging
+# Only in dev
 
 # --------------------------------------------------------------------------------
-# Operators
+# Operators & Stuff
 # Adds the operations to the F3 menu. Later we assign them to a button on the panel.
 
 
-# Toggle shake keys operator
+# Toggle shape keys operator
 class NDPT_OT_ToggleShapeKeys(bpy.types.Operator):
     """ Toggle the mute state of all shape keys """
     bl_idname = "ndptobject.toggleshapekeys"
@@ -57,15 +47,15 @@ class NDPT_OT_ToggleShapeKeys(bpy.types.Operator):
     
     # Button is pressed
     def execute(self, context):
-        # Log settings
         self.report({'INFO'},f"Toggling shape keys")
-        logging.info(f"toggling shape keys")
-        logging.info(f"settings:")
-        logging.info(f"toggle individually: {context.scene.NDPT_OT_ToggleShapeKeys_ToggleAll}")
+        # Log settings
+        #logging.info(f"toggling shape keys")
+        #logging.info(f"settings:")
+        #logging.info(f"toggle individually: {context.scene.ndpt.NDPT_OT_ToggleShapeKeys_ToggleAll}")
         
         # Run the function
-        result = ndpt_functions.toggle_shape_keys(toggleindividual = context.scene.NDPT_OT_ToggleShapeKeys_ToggleAll)
-        self.report({'INFO'},str(result))
+        result = ndpt_functions.toggle_shape_keys(toggleindividual = context.scene.ndpt.NDPT_OT_ToggleShapeKeys_ToggleAll)
+        report_results(self, result)
         
         return {'FINISHED'}
 
@@ -86,13 +76,13 @@ class NDPT_OT_JoinGeometryNodes(bpy.types.Operator):
     def execute(self, context):
         # Log settings
         self.report({'INFO'},f"Joining selected objects")
-        logging.info(f"Joining selected objects")
-        logging.info(f"settings:")
-        logging.info(f"Differentiate materials: {context.scene.NDPT_OT_JoinGeometryNodes_DifferentiateMaterials}")
+        #logging.info(f"Joining selected objects")
+        #logging.info(f"settings:")
+        #logging.info(f"Differentiate materials: {context.scene.ndpt.NDPT_OT_JoinGeometryNodes_DifferentiateMaterials}")
         
         # Run the function
-        result = ndpt_functions.join_selected_objects_with_geometry_nodes(DifferentiateMaterials = context.scene.NDPT_OT_JoinGeometryNodes_DifferentiateMaterials)
-        self.report({'INFO'},str(result))
+        result = ndpt_functions.join_selected_objects_with_geometry_nodes(DifferentiateMaterials = context.scene.ndpt.NDPT_OT_JoinGeometryNodes_DifferentiateMaterials)
+        report_results(self, result)
         
         return {'FINISHED'}
 
@@ -107,17 +97,17 @@ class NDPT_OT_SyncDataNames(bpy.types.Operator):
     # Enable button condition
     @classmethod
     def poll(cls, context):
-        return True
+        return context.mode == "OBJECT"
     
     # Button is pressed
     def execute(self, context):
         # Log settings
         self.report({'INFO'},f"Synchronizing data block names")
-        logging.info(f"synchronizing data block names")
+        #logging.info(f"synchronizing data block names")
         
         # Run the function
         result = ndpt_functions.sync_data_block_names()
-        self.report({'INFO'},str(result))
+        report_results(self, result)
 
         return {'FINISHED'}
 
@@ -138,21 +128,21 @@ class NDPT_OT_ConvertParticlesToCurves(bpy.types.Operator):
     def execute(self, context):
         # Log settings
         self.report({'INFO'},f"Converting particle systems to curves")
-        logging.info(f"converting particle system to curves")
-        logging.info(f"settings:")
-        logging.info(f"node group name: {context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup}")
-        logging.info(f"attachment uv map: {context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap}")
-        logging.info(f"attach curves: {context.scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves}")
-        logging.info(f"only parents: {context.scene.NDPT_OT_ConvertParticlesToCurves_OnlyParents}")
+        #logging.info(f"converting particle system to curves")
+        #logging.info(f"settings:")
+        #logging.info(f"node group name: {context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup}")
+        #logging.info(f"attachment uv map: {context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap}")
+        #logging.info(f"attach curves: {context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_AttachCurves}")
+        #logging.info(f"only parents: {context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_OnlyParents}")
         
         # Run the function
-        result = ndpt_functions.convert_particles_to_curves(nodegroupname = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup,attachmentuvmap = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap,attachcurves = context.scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves,skipchild = context.scene.NDPT_OT_ConvertParticlesToCurves_OnlyParents)
-        self.report({'INFO'},str(result))
+        result = ndpt_functions.convert_particles_to_curves(nodegroupname = context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup,attachmentuvmap = context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap,attachcurves = context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_AttachCurves,skipchild = context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_OnlyParents)
+        report_results(self, result)
 
         return {'FINISHED'}
 
 
-# Convert curves to particles 
+# Convert particles to curves 
 class NDPT_OT_ConvertParticlesAll(bpy.types.Operator):
     """ Convert all particle systems of the selected object to curves """
     bl_idname = "ndpthair.convertparticlesall"
@@ -167,11 +157,11 @@ class NDPT_OT_ConvertParticlesAll(bpy.types.Operator):
     # Button is pressed
     def execute(self, context):
         self.report({'INFO'},f"Converting particle system to visually identical curves object")
-        logging.info(f"converting particles to equivalent curves")
+        #logging.info(f"converting particles to equivalent curves")
         
         # Run the function
-        result = ndpt_functions.convert_particles_all(nodegroupname = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup,attachmentuvmap = context.scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap,attachcurves = context.scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves,skipchild = context.scene.NDPT_OT_ConvertParticlesToCurves_OnlyParents)
-        self.report({'INFO'},str(result))
+        result = ndpt_functions.convert_particles_all(nodegroupname = context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup,attachmentuvmap = context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap,attachcurves = context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_AttachCurves,skipchild = context.scene.ndpt.NDPT_OT_ConvertParticlesToCurves_OnlyParents)
+        report_results(self, result)
         
         return {'FINISHED'}
 
@@ -195,14 +185,14 @@ class NDPT_OT_ApplyArmatureModifiers(bpy.types.Operator):
     def execute(self, context):
         # Log settings
         self.report({'INFO'},f"Applying armature modifiers")
-        logging.info(f"applying armature modifiers")
-        logging.info(f"settings:")
-        logging.info(f"restore modifiers: {context.scene.NDPT_OT_ApplyArmatureModifiers_RestoreModifiers}")
-        logging.info(f"apply rest pose: {context.scene.NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose}")
+        #logging.info(f"applying armature modifiers")
+        #logging.info(f"settings:")
+        #logging.info(f"restore modifiers: {context.scene.ndpt.NDPT_OT_ApplyArmatureModifiers_RestoreModifiers}")
+        #logging.info(f"apply rest pose: {context.scene.ndpt.NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose}")
         
         # Run the function
-        result = ndpt_functions.apply_armature_modifiers(restoremodifier = context.scene.NDPT_OT_ApplyArmatureModifiers_RestoreModifiers, applyrestpose = context.scene.NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose)
-        self.report({'INFO'},str(result))
+        result = ndpt_functions.apply_armature_modifiers(restoremodifier = context.scene.ndpt.NDPT_OT_ApplyArmatureModifiers_RestoreModifiers, applyrestpose = context.scene.ndpt.NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose)
+        report_results(self, result)
 
         return {'FINISHED'}
 
@@ -226,11 +216,11 @@ class NDPT_OT_ConvertScaleToLocation(bpy.types.Operator):
     def execute(self, context):
         # Log settings
         self.report({'INFO'},f"Converting scale to location")
-        logging.info(f"converting scale to location")
+        #logging.info(f"converting scale to location")
         
         # Run the function
         result = ndpt_functions.convert_scale_to_loc()
-        self.report({'INFO'},str(result))
+        report_results(self, result)
 
         return {'FINISHED'}
 
@@ -251,14 +241,14 @@ class NDPT_OT_SelectHalf(bpy.types.Operator):
     def execute(self, context):
         # Log settings
         self.report({'INFO'},f"Selecting half")
-        logging.info(f"selecting half")
-        logging.info(f"settings:")
-        logging.info(f"select center: {context.scene.NDPT_OT_SelectHalf_SelectCenter}")
-        logging.info(f"symmetry axis: {context.scene.NDPT_OT_SelectHalf_SymmetryAxis}")
+        #logging.info(f"selecting half")
+        #logging.info(f"settings:")
+        #logging.info(f"select center: {context.scene.ndpt.NDPT_OT_SelectHalf_SelectCenter}")
+        #logging.info(f"symmetry axis: {context.scene.ndpt.NDPT_OT_SelectHalf_SymmetryAxis}")
         
         # Run the function
-        result = ndpt_functions.select_model_half(selectcenter = context.scene.NDPT_OT_SelectHalf_SelectCenter, symmetryaxis = context.scene.NDPT_OT_SelectHalf_SymmetryAxis)
-        self.report({'INFO'},str(result))
+        result = ndpt_functions.select_model_half(selectcenter = context.scene.ndpt.NDPT_OT_SelectHalf_SelectCenter, symmetryaxis = context.scene.ndpt.NDPT_OT_SelectHalf_SymmetryAxis)
+        report_results(self, result)
 
         return {'FINISHED'}
 
@@ -278,14 +268,14 @@ class  NDPT_OT_SelectAsymmetrical(bpy.types.Operator):
     # Button is pressed
     def execute(self, context):
         # Log settings
-        self.report({'INFO'},f"Selecting assymetrical vertices")
-        logging.info(f"selecting assymetrical vertices")
-        logging.info(f"settings:")
-        logging.info(f"symmetry axis: {context.scene.NDPT_OT_SelectHalf_SymmetryAxis}")
+        self.report({'INFO'},f"Selecting asymmetrical vertices")
+        #logging.info(f"selecting assymetrical vertices")
+        #logging.info(f"settings:")
+        #logging.info(f"symmetry axis: {context.scene.ndpt.NDPT_OT_SelectHalf_SymmetryAxis}")
         
         # Run the function
-        result = ndpt_functions.select_asymmetrical_vertices(symmetryaxis = context.scene.NDPT_OT_SelectHalf_SymmetryAxis)
-        self.report({'INFO'},str(result))
+        result = ndpt_functions.select_asymmetrical_vertices(symmetryaxis = context.scene.ndpt.NDPT_OT_SelectHalf_SymmetryAxis)
+        report_results(self, result)
 
         return {'FINISHED'}
 
@@ -293,7 +283,7 @@ class  NDPT_OT_SelectAsymmetrical(bpy.types.Operator):
 # Select mergeable operator
 class  NDPT_OT_SelectMergeable(bpy.types.Operator):
     """ Selects vertices that are in the same location as another vertex """
-    bl_idname = "ndptedit.selectamergeable"
+    bl_idname = "ndptedit.selectmergeable"
     bl_label = "Selects vertices that are in the same location as another vertex"
     bl_options = {"REGISTER", "UNDO"}
     
@@ -306,11 +296,11 @@ class  NDPT_OT_SelectMergeable(bpy.types.Operator):
     def execute(self, context):
         # Log settings
         self.report({'INFO'},f"Selecting mergeable vertices")
-        logging.info(f"selecting mergeable vertices")
+        #logging.info(f"selecting mergeable vertices")
         
         # Run the function
         result = ndpt_functions.select_mergeable_vertices()
-        self.report({'INFO'},str(result))
+        report_results(self, result)
         
         return {'FINISHED'}
 
@@ -331,12 +321,12 @@ class NDPT_OT_SelectSimilarNodes(bpy.types.Operator):
     def execute(self, context):
         # Log settings
         self.report({'INFO'},f"Selecting similar nodes")
-        logging.info(f"selecting similar nodes")
+        #logging.info(f"selecting similar nodes")
 
         
         # Run the function
         result = ndpt_functions.nodes_select_similar()
-        self.report({'INFO'},str(result))
+        report_results(self, result)
 
         return {'FINISHED'}
 
@@ -357,13 +347,13 @@ class NDPT_OT_MergeDuplicateNodeGroups(bpy.types.Operator):
     def execute(self, context):
         # Log settings
         self.report({'INFO'},f"Merging duplicate node groups")
-        logging.info(f"merging duplicate node groups")
-        logging.info(f"settings:")
-        logging.info(f"priority mode: {context.scene.NDPT_OT_MergeDuplicateNodeGroups_PriorityMode}")
+        #logging.info(f"merging duplicate node groups")
+        #logging.info(f"settings:")
+        #logging.info(f"priority mode: {context.scene.ndpt.NDPT_OT_MergeDuplicateNodeGroups_PriorityMode}")
         
         # Run the function
-        result = ndpt_functions.node_group_merge_duplicates(prioritymode = context.scene.NDPT_OT_MergeDuplicateNodeGroups_PriorityMode)
-        self.report({'INFO'},str(result))
+        result = ndpt_functions.node_group_merge_duplicates(prioritymode = context.scene.ndpt.NDPT_OT_MergeDuplicateNodeGroups_PriorityMode)
+        report_results(self, result)
 
         return {'FINISHED'}
 
@@ -384,22 +374,22 @@ class NDPT_OT_FindNodeParents(bpy.types.Operator):
     def execute(self, context):
         # Start
         scene = context.scene
-        nodegroupname = context.scene.NDPT_OT_FindNodeParents_DefaultNodeGroup
+        nodegroupname = context.scene.ndpt.NDPT_OT_FindNodeParents_DefaultNodeGroup
 
         # Log settings
         self.report({'INFO'},f"Finding node parents")
-        logging.info(f"finding node parents")
-        logging.info(f"settings:")
-        logging.info(f"node group name: {nodegroupname}")
+        #logging.info(f"finding node parents")
+        #logging.info(f"settings:")
+        #logging.info(f"node group name: {nodegroupname}")
 
         # Clear previous results
-        scene.NDPT_OT_FindNodeParents_Results.clear()
+        scene.ndpt.NDPT_OT_FindNodeParents_Results.clear()
         
         # Run the function
-        results = ndpt_functions.node_group_list_parents(nodegroupname = context.scene.NDPT_OT_FindNodeParents_DefaultNodeGroup)
+        results = ndpt_functions.node_group_list_parents(nodegroupname = context.scene.ndpt.NDPT_OT_FindNodeParents_DefaultNodeGroup)
         
         for r in results:
-            item = scene.NDPT_OT_FindNodeParents_Results.add()
+            item = scene.ndpt.NDPT_OT_FindNodeParents_Results.add()
             item.name = r
         
         self.report({'INFO'}, f"Found {len(results) - 1} results.")
@@ -408,6 +398,17 @@ class NDPT_OT_FindNodeParents(bpy.types.Operator):
 
 
 # --------------------------------------------------------------------------------
+# Helper functions
+
+# Report results
+def report_results(op, result):
+    if isinstance(result, str):
+        op.report({'INFO'}, result)
+    elif isinstance(result, (list, tuple, set)):
+        for item in result:
+            op.report({'INFO'}, str(item))
+    else:
+        op.report({'INFO'}, str(result))
 
 # Function to dynamically fetch all node groups in the scene
 def get_node_groups(node_type="BOTH"):
@@ -425,7 +426,7 @@ def get_node_groups(node_type="BOTH"):
     return items
 
 # Get all node groups in the scene
-def get_all_node_groups(sef,context):
+def get_all_node_groups(self,context):
     items = get_node_groups(node_type = "BOTH")
     return items
 
@@ -449,6 +450,12 @@ def get_uv_maps(self, context):
     return items
 
 # -------------------------------------------------------------------------------
+
+# Data type for node parent search results
+class NDPT_NodeParentResult(bpy.types.PropertyGroup):
+    """Item representing a single node parent result"""
+    name: bpy.props.StringProperty(name="Parent Node Group Name")
+
 # UI List for showing node group parent results
 class NDPT_UL_NodeParentResults(bpy.types.UIList):
     """UI list to show node group parents"""
@@ -486,7 +493,7 @@ class NDPT_PT_Sidebar_Object(bpy.types.Panel):
         prop = box.operator(NDPT_OT_ToggleShapeKeys.bl_idname, text="Toggle shape keys")
         
         # Button Settings
-        box.prop(context.scene, "NDPT_OT_ToggleShapeKeys_ToggleAll")
+        box.prop(context.scene.ndpt, "NDPT_OT_ToggleShapeKeys_ToggleAll")
         
         # Separate
         col.separator()
@@ -495,7 +502,7 @@ class NDPT_PT_Sidebar_Object(bpy.types.Panel):
         prop = box.operator(NDPT_OT_JoinGeometryNodes.bl_idname, text="Join with geometry nodes")
         
         # Button Settings
-        box.prop(context.scene, "NDPT_OT_JoinGeometryNodes_DifferentiateMaterials")
+        box.prop(context.scene.ndpt, "NDPT_OT_JoinGeometryNodes_DifferentiateMaterials")
         
         # Separate
         col.separator()
@@ -524,13 +531,13 @@ class NDPT_PT_Sidebar_Object(bpy.types.Panel):
         prop = box.operator(NDPT_OT_SelectHalf.bl_idname, text="Select half")
         
         # Button settings
-        box.prop(context.scene, "NDPT_OT_SelectHalf_SelectCenter")
+        box.prop(context.scene.ndpt, "NDPT_OT_SelectHalf_SelectCenter")
         
         # Label
         box.label(text="Symmetry axis:")
         
         # Button settings
-        box.prop(context.scene, "NDPT_OT_SelectHalf_SymmetryAxis")
+        box.prop(context.scene.ndpt, "NDPT_OT_SelectHalf_SymmetryAxis")
         
         # Separate
         col.separator()
@@ -573,19 +580,19 @@ class NDPT_PT_Sidebar_Hair(bpy.types.Panel):
         box.label(text="Default node group:")
         
         # Button settings
-        box.prop(context.scene, "NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup")
+        box.prop(context.scene.ndpt, "NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup")
         
         # Label
         box.label(text="Attachment UV map:")
         
         # Button settings
-        box.prop(context.scene, "NDPT_OT_ConvertParticlesToCurves_DefaultUVMap")
+        box.prop(context.scene.ndpt, "NDPT_OT_ConvertParticlesToCurves_DefaultUVMap")
         
         # Button settings
-        box.prop(context.scene, "NDPT_OT_ConvertParticlesToCurves_AttachCurves")
+        box.prop(context.scene.ndpt, "NDPT_OT_ConvertParticlesToCurves_AttachCurves")
         
         # Button settings
-        box.prop(context.scene, "NDPT_OT_ConvertParticlesToCurves_OnlyParents")
+        box.prop(context.scene.ndpt, "NDPT_OT_ConvertParticlesToCurves_OnlyParents")
         
         # Separate
         col.separator()
@@ -619,10 +626,10 @@ class NDPT_PT_Sidebar_Armature(bpy.types.Panel):
         prop = box.operator(NDPT_OT_ApplyArmatureModifiers.bl_idname, text="Apply armature modifiers")
         
         # Button settings
-        box.prop(context.scene, "NDPT_OT_ApplyArmatureModifiers_RestoreModifiers")
+        box.prop(context.scene.ndpt, "NDPT_OT_ApplyArmatureModifiers_RestoreModifiers")
         
         # Button settings
-        box.prop(context.scene, "NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose")
+        box.prop(context.scene.ndpt, "NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose")
         
         # Separate
         col.separator()
@@ -666,15 +673,15 @@ class NDPT_PT_Sidebar_Nodes(bpy.types.Panel):
         box.label(text="Node Group:")
         
         # Button settings
-        box.prop(context.scene, "NDPT_OT_FindNodeParents_DefaultNodeGroup")
+        box.prop(context.scene.ndpt, "NDPT_OT_FindNodeParents_DefaultNodeGroup")
         
         # Separate
         col.separator()
 
         # Show results list
-        if len(context.scene.NDPT_OT_FindNodeParents_Results) > 0:
+        if len(context.scene.ndpt.NDPT_OT_FindNodeParents_Results) > 0:
             box.label(text="Results:")
-            box.template_list("NDPT_UL_NodeParentResults", "", context.scene, "NDPT_OT_FindNodeParents_Results", context.scene, "NDPT_OT_FindNodeParents_Results_Index")
+            box.template_list("NDPT_UL_NodeParentResults", "", context.scene.ndpt, "NDPT_OT_FindNodeParents_Results", context.scene.ndpt, "NDPT_OT_FindNodeParents_Results_Index")
         else:
             box.label(text="No results yet.")
         
@@ -685,7 +692,7 @@ class NDPT_PT_Sidebar_Nodes(bpy.types.Panel):
         box.label(text="Priority mode:")
         
         # Button settings
-        box.prop(context.scene, "NDPT_OT_MergeDuplicateNodeGroups_PriorityMode")
+        box.prop(context.scene.ndpt, "NDPT_OT_MergeDuplicateNodeGroups_PriorityMode")
         
         # Separate
         col.separator()
@@ -694,6 +701,118 @@ class NDPT_PT_Sidebar_Nodes(bpy.types.Panel):
 # --------------------------------------------------------------------------------
 # Initiate addon
 
+# Class for all the button setting properties
+class NDPT_SceneProperties(bpy.types.PropertyGroup):
+    # Boolean Property
+    # Toggle shape keys: toggle all
+    NDPT_OT_ToggleShapeKeys_ToggleAll: bpy.props.BoolProperty(
+        name='Toggle individually',
+        description = "Toggle all shape keys individually instead of turning all on/off",
+        default = False
+    )
+    
+    # Boolean Property
+    # Join with geometry nodes: Differentiate materials
+    NDPT_OT_JoinGeometryNodes_DifferentiateMaterials: bpy.props.BoolProperty(
+        name='Differentiate materials',
+        description = "Differentiate materials when joining objects, having one object per material. Useful for curves which can only have one material",
+        default = True
+    )
+    
+    # Enum property
+    # Convert particle system to curves: default preset name
+    NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup: bpy.props.EnumProperty(
+        name = '',
+        description = "Name of the default node group to apply if there isn't a current curves object with one",
+        items = get_geometry_node_groups,
+        default = None
+    )
+    
+    # Enum property
+    # List of uv maps of current active object
+    NDPT_OT_ConvertParticlesToCurves_DefaultUVMap: bpy.props.EnumProperty(
+        name = '',
+        description = "List of UV maps in the active object",
+        items = get_uv_maps,  # Function to get UV maps
+        default = None  # First UV map as default (or "None" if no UV maps)
+    )
+    
+    # Boolean Property
+    # Convert particle system to curves: attach curves to surface
+    NDPT_OT_ConvertParticlesToCurves_AttachCurves: bpy.props.BoolProperty(
+        name='Attach curves',
+        description = "Automatically attach the curves to the surface so that they get a surface_uv_coordinate",
+        default = True
+    )
+    
+    # Boolean Property
+    # Convert particle system to curves: attach curves to surface
+    NDPT_OT_ConvertParticlesToCurves_OnlyParents: bpy.props.BoolProperty(
+        name='Only parent curves',
+        description = "Only convert parent curves and skip interpolated child curves",
+        default = True
+    )
+    
+    # Boolean Property
+    # Apply armature modifiers: restore modifiers
+    NDPT_OT_ApplyArmatureModifiers_RestoreModifiers: bpy.props.BoolProperty(
+        name='Restore modifiers',
+        description = "Add a copy of the armature modifier after applying it",
+        default = True
+    )
+    
+    # Boolean Property
+    # Apply armature modifiers: apply pose as rest pose
+    NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose: bpy.props.BoolProperty(
+        name='Apply pose as rest pose',
+        description = "Apply the armature's pose as the rest pose",
+        default = False
+    )
+    
+    # Boolean Property
+    # Select half: select center vertices
+    NDPT_OT_SelectHalf_SelectCenter: bpy.props.BoolProperty(
+        name='Select center',
+        description = "Select vertices in the central line",
+        default = False
+    )
+    
+    # Enum Property
+    # Select half: symmetry axis
+    NDPT_OT_SelectHalf_SymmetryAxis: bpy.props.EnumProperty(
+        name='',
+        description = "Select the axis of symmetry",
+        items = [("+X", "+X", "+X axis"),("-X", "-X", "-X axis"),("+Y", "+Y", "+Y axis"),("-Y", "-Y", "-Y axis"),("+Z", "+Z", "+Z axis"),("-Z", "-Z", "-Z axis")],
+        default = "+X"
+    )
+    
+    # Enum Property
+    # Dropdown for finding node parents
+    NDPT_OT_FindNodeParents_DefaultNodeGroup: bpy.props.EnumProperty(
+        name = '',
+        description = "Search which node groups contain this node group",
+        items = get_all_node_groups,
+        default = None
+    )
+
+    # Collection property for node parent search results
+    NDPT_OT_FindNodeParents_Results: bpy.props.CollectionProperty(
+        type=NDPT_NodeParentResult
+    )
+    
+    NDPT_OT_FindNodeParents_Results_Index: bpy.props.IntProperty(
+        default=0
+    )
+
+    
+    # Enum Property
+    # Merge duplicate node groups: Priority mode
+    NDPT_OT_MergeDuplicateNodeGroups_PriorityMode: bpy.props.EnumProperty(
+        name='',
+        description = "Priority mode",
+        items = [("Oldest", "Oldest", "Prioritizes the oldest node group with the lowest suffix number"),("Newest", "Newest", "Prioritizes the newest node group with the higest suffix number")],
+        default = "Oldest"
+    )
 
 # List of enabled classes
 classes = [
@@ -714,7 +833,9 @@ classes = [
     NDPT_OT_SelectSimilarNodes,
     NDPT_OT_FindNodeParents,
     NDPT_OT_MergeDuplicateNodeGroups,
+    NDPT_NodeParentResult,
     NDPT_UL_NodeParentResults,
+    NDPT_SceneProperties,
 ]
 
 # Run when enabling addon
@@ -723,140 +844,30 @@ def register():
     # Register all classes
     for cls in classes:
         bpy.utils.register_class(cls)
-    
-    # Boolean Property
-    # Toggle shape keys: toggle all
-    bpy.types.Scene.NDPT_OT_ToggleShapeKeys_ToggleAll = bpy.props.BoolProperty(
-        name='Toggle individually',
-        description = "Toggle all shape keys individually insteaf of turning all on/off",
-        default = True
-    )
-    
-    # Boolean Property
-    # Join with geometry nodes: Differentiate materials
-    bpy.types.Scene.NDPT_OT_JoinGeometryNodes_DifferentiateMaterials = bpy.props.BoolProperty(
-        name='Differentiate materials',
-        description = "Differentiate materials when joining objects, having one object per material. Useful for curves which can only have one material",
-        default = True
-    )
-    
-    # Enum property
-    # Convert particle system to curves: default preset name
-    bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup = bpy.props.EnumProperty(
-        name = '',
-        description = "Name of the default node group to apply if there isn't a current curves object with one",
-        items = get_geometry_node_groups,
-        default = 0
-    )
-    
-    # Enum property
-    # List of uv maps of current active object
-    bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap = bpy.props.EnumProperty(
-        name = '',
-        description = "List of UV maps in the active object",
-        items = get_uv_maps,  # Function to get UV maps
-        default = 0  # First UV map as default (or "None" if no UV maps)
-    )
-    
-    # Boolean Property
-    # Convert particle system to curves: attach curves to surface
-    bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves = bpy.props.BoolProperty(
-        name='Attach curves',
-        description = "Automatically attach the curves to the surface so that they get a surface_uv_coordinate",
-        default = True
-    )
-    
-    # Boolean Property
-    # Convert particle system to curves: attach curves to surface
-    bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_OnlyParents = bpy.props.BoolProperty(
-        name='Only parent curves',
-        description = "Only convert parent curves and skip interpolated child curves",
-        default = True
-    )
-    
-    # Boolean Property
-    # Apply armature modifiers: restore modifiers
-    bpy.types.Scene.NDPT_OT_ApplyArmatureModifiers_RestoreModifiers = bpy.props.BoolProperty(
-        name='Restore modifiers',
-        description = "Add a copy of the armature modifier after applying it",
-        default = True
-    )
-    
-    # Boolean Property
-    # Apply armature modifiers: apply pose as rest pose
-    bpy.types.Scene.NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose = bpy.props.BoolProperty(
-        name='Apply pose as rest pose',
-        description = "Apply the armature's pose as the rest pose",
-        default = False
-    )
-    
-    # Boolean Property
-    # Select half: select center vertices
-    bpy.types.Scene.NDPT_OT_SelectHalf_SelectCenter = bpy.props.BoolProperty(
-        name='Select center',
-        description = "Select vertices in the central line",
-        default = False
-    )
-    
-    # Enum Property
-    # Select half: symmetry axis
-    bpy.types.Scene.NDPT_OT_SelectHalf_SymmetryAxis = bpy.props.EnumProperty(
-        name='',
-        description = "Select the axis of symmetry",
-        items = [("+X", "+X", "+X axis"),("-X", "-X", "-X axis"),("+Y", "+Y", "+Y axis"),("-Y", "-Y", "-Y axis"),("+Z", "+Z", "+Z axis"),("-Z", "-Z", "-Z axis")],
-        default = "+X"
-    )
-    
-    # Enum Property
-    # Dropdown for finding node parents
-    bpy.types.Scene.NDPT_OT_FindNodeParents_DefaultNodeGroup = bpy.props.EnumProperty(
-        name = '',
-        description = "Search which node groups contain this node group",
-        items = get_all_node_groups,
-        default = 0
-    )
 
-    # Collection property for node parent search results
-    bpy.types.Scene.NDPT_OT_FindNodeParents_Results = bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
-    bpy.types.Scene.NDPT_OT_FindNodeParents_Results_Index = bpy.props.IntProperty(default=0)
-    
-    # Enum Property
-    # Merge duplicate node groups: Priority mode
-    bpy.types.Scene.NDPT_OT_MergeDuplicateNodeGroups_PriorityMode = bpy.props.EnumProperty(
-        name='',
-        description = "Priority mode",
-        items = [("Oldest", "Oldest", "Prioritizes the oldest node group with the lowest suffix number"),("Newest", "Newest", "Prioritizes the newest node group with the higest suffix number")],
-        default = "Oldest"
-    )
-    
+    # Register scene properties
+    if not hasattr(bpy.types.Scene, "ndpt"):
+        bpy.types.Scene.ndpt = bpy.props.PointerProperty(type=NDPT_SceneProperties)
+
+    # Log   
+    #logging.info("NDP Tools Enabled")
 
 # Run when disabling addon
 # Delete all the custom settings buttons
 def unregister():
-    # Unregister button settings
-    del bpy.types.Scene.NDPT_OT_ToggleShapeKeys_ToggleAll
-    del bpy.types.Scene.NDPT_OT_JoinGeometryNodes_DifferentiateMaterials
-    del bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultNodeGroup
-    del bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_DefaultUVMap
-    del bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_AttachCurves
-    del bpy.types.Scene.NDPT_OT_ConvertParticlesToCurves_OnlyParents
-    del bpy.types.Scene.NDPT_OT_ApplyArmatureModifiers_RestoreModifiers
-    del bpy.types.Scene.NDPT_OT_ApplyArmatureModifiers_ApplyPoseAsRestPose
-    del bpy.types.Scene.NDPT_OT_SelectHalf_SelectCenter
-    del bpy.types.Scene.NDPT_OT_SelectHalf_SymmetryAxis
-    del bpy.types.Scene.NDPT_OT_FindNodeParents_DefaultNodeGroup
-    del bpy.types.Scene.NDPT_OT_MergeDuplicateNodeGroups_PriorityMode
 
-    del bpy.types.Scene.NDPT_OT_FindNodeParents_Results
-    del bpy.types.Scene.NDPT_OT_FindNodeParents_Results_Index
-    
+    # Unregister button settings
+    if hasattr(bpy.types.Scene, "ndpt"):
+        del bpy.types.Scene.ndpt
+
     # Unregister classes
-    for cls in classes:
+    for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     
     # Log   
-    logging.info("NDP Tools Disabled")
+    #logging.info("NDP Tools Disabled")
 
 # Register
-if __name__ == '__main__':
-    register()
+# Commented out as it's unecessary apparently. Maybe only on older versions.
+#if __name__ == '__main__':
+#    register()

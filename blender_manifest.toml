@@ -3,11 +3,11 @@ schema_version = "1.0.0"
 
 id = "ndptools"
 
-version = "1.0.1"
+version = "1.0.2"
 
-name = "NDPTools: Scene clean up tools"
+name = "NDPTools: General clean up tools"
 
-tagline = "Adds a panel for cleaning up the scene's data, node groups, etc"
+tagline = "Adds a panel with tools for cleaning up objects, data, nodes and more."
 
 maintainer = "NDP <@ndp>"
 

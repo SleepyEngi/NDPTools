@@ -1,18 +1,19 @@
 NDPTools: Scene clean up tools
 Author: NDP
-Version: 1.0.1
-YYYY-MM-DD: 2024-10-06
+Version: 1.0.2
+Blender 4.2+
+YYYY-MM-DD: 2025-10-14
 =========================================================================================================
-Download instructions
+Manual Download instructions
 1. You can find the latest version of this addon at https://github.com/SleepyEngi/NDPTools
 2. Go to the green "<> Code" button
 3. Click "Download ZIP"
 =========================================================================================================
-Installation instructions
-1. On blender, go to Edit -> Preferences -> Add-ons
-2. Click on "Install" on the top right corner
-3. Select the .zip file "ndptools-master.zip" that contains the addon
-4. Enable the addon by clicking on the checkmark on the addon that has appeared
+Manual Installation instructions
+1. On blender, go to Edit -> Preferences -> Add-ons.
+2. Click the down arrow on the top right corner and select "Install from disk".
+3. Select the .zip file "ndptools-master.zip" that contains the addon.
+4. Make sure the addon is enabled with the checkmark on the left side of the title.
 =========================================================================================================
 **Features**
 

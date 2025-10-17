@@ -6,7 +6,7 @@ from mathutils import Vector
 
 # Function to toggle all shape keys
 def toggle_shape_keys(**kwargs):
-    # Initiate logging
+    # Initiate results
     msgs = []
     
     # Get settings
@@ -45,18 +45,18 @@ def toggle_shape_keys(**kwargs):
 
 # Function to rename data blocks to their objects name
 def sync_data_block_names():
-    # Initiate logging
+    # Initiate results
     msgs = []
 
     for obj in bpy.data.objects:
         # Skip empties
         if obj.type == 'EMPTY':
-            logging.info(f"'{obj.name}' is empty and has no data, skipping")
+            #logging.info(f"'{obj.name}' is empty and has no data, skipping")
             continue
 
         # Skip linked or library overridden data — we shouldn't rename those
         if obj.library or obj.override_library:
-            logging.info(f"Data '{obj.data.name}' is a linked or a library override, skipping")
+            #logging.info(f"Data '{obj.data.name}' is a linked or a library override, skipping")
             continue
 
         # Skip instanced data (shared among multiple objects)
@@ -64,7 +64,8 @@ def sync_data_block_names():
         if obj.data and obj.data.users == 1:
             obj.data.name = obj.name
         else:
-            logging.info(f"Data '{obj.data.name}' has multiple users, skipping")
+            #logging.info(f"Data '{obj.data.name}' has multiple users, skipping")
+            continue
     
     # End
     msgs.append("Renamed data blocks")
@@ -73,7 +74,7 @@ def sync_data_block_names():
 
 # Conversion operation
 def particles_to_curves(input_particle_system,**kwargs):
-    # Initiate logging
+    # Initiate results
     msgs = []
     # Get settings
     nodegroupname = kwargs.get('nodegroupname', "Hair Preset")
@@ -94,7 +95,6 @@ def particles_to_curves(input_particle_system,**kwargs):
     # Ensure particle system is hair
     if particle_system.settings.type != 'HAIR':
         msgs.append(f"Error: Particle system '{particle_system.name}' is not a hair system.")
-        logging.info(msgs[-1])
         return msgs
     
     # Get the surface object from the particle system
@@ -180,7 +180,7 @@ def particles_to_curves(input_particle_system,**kwargs):
     if bpy.data.node_groups.get("Set Hair Curve Profile") == None:
 
         # Report that import is necessary
-        logging.info(f"Hair Curve Profile node group is missing. Attempting to import it now.")
+        #logging.info(f"Hair Curve Profile node group is missing. Attempting to import it now.")
 
         # Get the blender directory of the current version
         blender_directory = bpy.utils.resource_path('LOCAL')
@@ -220,7 +220,7 @@ def particles_to_curves(input_particle_system,**kwargs):
                 imported_node_group.use_fake_user = False
 
             # Report successful import
-            logging.info("Succesfully imported the hair curve profile node group")
+            #logging.info("Succesfully imported the hair curve profile node group")
     
     #--------------------------------------------------------------------------------------------
     # Apply visual profile to new hair curves object for easier viewing
@@ -312,14 +312,14 @@ def particles_to_curves(input_particle_system,**kwargs):
     # Set mode back to original mode
     bpy.ops.object.mode_set(mode=originalmode)
     
-    logging.info("finished conversion")
+    #logging.info("finished conversion")
     msgs.append("Converted particle system to curves")
     return msgs
 
 
 # Function for converting one particle system
 def convert_particles_to_curves(**kwargs):
-    # Initiate logging
+    # Initiate results
     msgs = []
     
     # Get settings
@@ -355,14 +355,14 @@ def convert_particles_to_curves(**kwargs):
     particle_system = surface_object.particle_systems.active
     
     result = particles_to_curves(particle_system,nodegroupname = input_nodegroupname, attachmentuvmap = input_attachmentuvmap, attachcurves = input_attachcurves, skipchild = input_skipchild)
-    msgs.append(result)
+    msgs = msgs + result
     
     return msgs
     
 
 # Function to convert all particle systems directly into equivalent curves objects
 def convert_particles_all(**kwargs):
-    # Initiate logging
+    # Initiate results
     msgs = []
     converted_count = 0  # Counter for converted particle systems
     
@@ -416,7 +416,7 @@ def convert_particles_all(**kwargs):
 
 # Function to apply all armature modifers of all children objects of an armature, and re-add them (Optional)
 def apply_armature_modifiers(**kwargs):
-    # Initiate logging
+    # Initiate results
     msgs = []
     
     # Settings
@@ -436,7 +436,7 @@ def apply_armature_modifiers(**kwargs):
 
     # Get the armature
     armature = bpy.context.object
-    logging.info(f"armature: {armature.name}")
+    #logging.info(f"armature: {armature.name}")
     
     # Store current mode
     original_mode = bpy.context.mode
@@ -445,7 +445,7 @@ def apply_armature_modifiers(**kwargs):
         original_mode = 'EDIT'
     
     #Start
-    logging.info(f"applying armature modifiers of children objects")
+    #logging.info(f"applying armature modifiers of children objects")
     armaturechildren = []
     
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -490,9 +490,14 @@ def apply_armature_modifiers(**kwargs):
 
 # Function to convert scale transforms into location transforms
 def convert_scale_to_loc():
-    # Initiate logging
+    # Initiate results
     msgs = []
     
+    # Check that an active object is selected
+    if not bpy.context.active_object:
+        msgs.append("No active object")
+        return msgs
+
     # Check object is armature
     armature_object = bpy.context.active_object
     if armature_object.type != 'ARMATURE':
@@ -501,7 +506,7 @@ def convert_scale_to_loc():
         return msgs
 
     # Function for converting scale to visual location transforms in pose mode
-    logging.info(f"converting scale transforms to visual location")
+    #logging.info(f"converting scale transforms to visual location")
 
     # Store current mode
     original_mode = bpy.context.mode
@@ -513,7 +518,7 @@ def convert_scale_to_loc():
 
     
 
-    # Initiate logging variable
+    # Initiate results variable
     editnumber = 0
 
     # Initiate list of any bones that are not at their armaturespace rest location
@@ -530,8 +535,8 @@ def convert_scale_to_loc():
         # We copy all data in case we need parent data
         posebone_data[p_bone] = [p_bone.bone.head_local.copy(), p_bone.head.copy(), p_bone.location.copy(),posebone_rotation]
         posebone_list.append(p_bone)
-        logging.info(f"{p_bone.name} rest pos: {p_bone.bone.head_local}")
-        logging.info(f"{p_bone.name} pose pos: {p_bone.head}")
+        #logging.info(f"{p_bone.name} rest pos: {p_bone.bone.head_local}")
+        #logging.info(f"{p_bone.name} pose pos: {p_bone.head}")
 
     # Clear scale of all bones
     for p_bone in armature_object.pose.bones:
@@ -539,9 +544,9 @@ def convert_scale_to_loc():
         p_bone.location = (0,0,0)
 
     # Clear scale and set location
-    logging.info(f"Setting location of pose bones:")
+    #logging.info(f"Setting location of pose bones:")
     for p_bone in posebone_list:
-        logging.info(f"posed bone: {p_bone}")
+        #logging.info(f"posed bone: {p_bone}")
         # Update positions
         bpy.context.view_layer.update()
 
@@ -578,7 +583,7 @@ def convert_scale_to_loc():
 
 # Function to select half of the vertices of a model
 def select_model_half(**kwargs):
-    # Inititate logging
+    # Initiate results
     msgs = []
     
     # Check that we are in edit mode
@@ -639,7 +644,7 @@ def select_model_half(**kwargs):
 
 # Function to select asymmetric vertices
 def select_asymmetrical_vertices(**kwargs):
-    # Initiate logging
+    # Initiate results
     msgs = []
 
     # Check that we are in edit mode
@@ -719,7 +724,7 @@ def select_asymmetrical_vertices(**kwargs):
 
 # Function to select only vertices that have a duplicate in the exact same location
 def select_mergeable_vertices():
-    # Initiate logging
+    # Initiate results
     msgs = []
     
     # Check that we are in edit mode
@@ -770,25 +775,25 @@ def select_mergeable_vertices():
 
 # Function to find groups that contain a certain node group
 def node_group_list_parents(**kwargs):
-    # Initiate logging
+    # Initiate results
     msgs = []
     
     # Get settings
     nodegroupname = kwargs.get('nodegroupname', "None")
     
     # Start, check that node exists
-    logging.info(f"----------------------------------------------------------------------------------")
+    #logging.info(f"----------------------------------------------------------------------------------")
     if bpy.data.node_groups.get(nodegroupname):
         # Get the node group by name
         target_nodegroup = bpy.data.node_groups.get(nodegroupname)
     else:
-        logging.info("Node group not found")
+        #logging.info("Node group not found")
         msgs.append("Node group not found")
         return msgs
     
     # Start list
-    logging.info(f"Listing parents for '{target_nodegroup.name}'")
-    logging.info(f"")
+    #logging.info(f"Listing parents for '{target_nodegroup.name}'")
+    #logging.info(f"")
     
     # Log number of owners
     counter = 0
@@ -799,7 +804,7 @@ def node_group_list_parents(**kwargs):
             for node in nodegroup.nodes:
                 if node.bl_rna.identifier == 'GeometryNodeGroup' or node.bl_rna.identifier == 'ShaderNodeGroup':
                     if node.node_tree == target_nodegroup:
-                        logging.info(f"Node group '{nodegroup.name}' contains '{target_nodegroup.name}'")
+                        #logging.info(f"Node group '{nodegroup.name}' contains '{target_nodegroup.name}'")
                         msgs.append(f"Node group: {nodegroup.name}")
                         counter = counter + 1
     
@@ -809,13 +814,13 @@ def node_group_list_parents(**kwargs):
             for node in nodegroup.node_tree.nodes:
                 if node.bl_rna.identifier == 'GeometryNodeGroup' or node.bl_rna.identifier == 'ShaderNodeGroup':
                     if node.node_tree == target_nodegroup:
-                        logging.info(f"Material '{nodegroup.name}' contains '{target_nodegroup.name}'")
+                        #logging.info(f"Material '{nodegroup.name}' contains '{target_nodegroup.name}'")
                         msgs.append(f"Material: {nodegroup.name}")
                         counter = counter + 1
     
     # Finalize
-    logging.info(f"")
-    logging.info(f"There are {counter} instances containing '{target_nodegroup.name}'")
+    #logging.info(f"")
+    #logging.info(f"There are {counter} instances containing '{target_nodegroup.name}'")
     
     msgs.append(f"Total: {counter} results.")
     return msgs
@@ -823,7 +828,7 @@ def node_group_list_parents(**kwargs):
 
 # Function to replace duplicate node groups that end in .001 with the original
 def node_group_merge_duplicates(**kwargs):
-    # Initiate logging
+    # Initiate results
     msgs = []
     
     # Get settings
@@ -859,7 +864,7 @@ def node_group_merge_duplicates(**kwargs):
             # Step 3: Add .old suffix to all other duplicates
             for duplicate in group_list[1:]:
                 duplicate.name += ".old"  # Add .old suffix to duplicates
-                logging.info(f"Renamed {duplicate.name} to {duplicate.name}")
+                #logging.info(f"Renamed {duplicate.name} to {duplicate.name}")
 
             # If we're prioritizing the newest, handle renaming accordingly
             if priority == "Newest":
@@ -868,7 +873,7 @@ def node_group_merge_duplicates(**kwargs):
                 # Add ".old" to the oldest node if it doesn't have .###
                 if len(main_node_group.name) > 4 and main_node_group.name[-4] == '.' and main_node_group.name[-3:].isdigit():
                     main_node_group.name = main_node_group.name[:-4]
-                    logging.info(f"Renamed main node group to {main_node_group.name}")
+                    #logging.info(f"Renamed main node group to {main_node_group.name}")
 
             # Step 4: Replace references to duplicates in all node groups and materials
             for duplicate in group_list[1:]:
@@ -877,7 +882,7 @@ def node_group_merge_duplicates(**kwargs):
                     for node in other_group.nodes:
                         if node.type == 'GROUP' and node.node_tree == duplicate:
                             node.node_tree = main_node_group
-                            logging.info(f"Replaced duplicate {duplicate.name} with {main_node_group.name} in node group {other_group.name}")
+                            #logging.info(f"Replaced duplicate {duplicate.name} with {main_node_group.name} in node group {other_group.name}")
                 
                 # Iterate through materials
                 for material in bpy.data.materials:
@@ -885,14 +890,14 @@ def node_group_merge_duplicates(**kwargs):
                         for node in material.node_tree.nodes:
                             if node.type == 'GROUP' and node.node_tree == duplicate:
                                 node.node_tree = main_node_group
-                                logging.info(f"Replaced duplicate {duplicate.name} with {main_node_group.name} in material {material.name}")
+                                #logging.info(f"Replaced duplicate {duplicate.name} with {main_node_group.name} in material {material.name}")
 
         else:  # No duplicates, but has a .00# suffix
             single_group = group_list[0]
             if len(single_group.name) > 4 and single_group.name[-4] == '.' and single_group.name[-3:].isdigit():
                 # Rename to remove the .### suffix
                 single_group.name = base_name
-                logging.info(f"Renamed non-duplicate node group {single_group.name} to {base_name}")
+                #logging.info(f"Renamed non-duplicate node group {single_group.name} to {base_name}")
 
     msgs.append("Finished merging and renaming node groups")
     return msgs
@@ -900,7 +905,7 @@ def node_group_merge_duplicates(**kwargs):
 
 # Function to select similar nodes in the current editor
 def nodes_select_similar():
-    # Initiate logging
+    # Initiate results
     msgs = []
     
     # get all node editor windows and the node groups open in them
@@ -923,12 +928,13 @@ def nodes_select_similar():
                 # if its not a node group node, just select all similar
                 else:
                     node.select = True
-    return "Selected all similar nodes"
+    msgs.append("Selected all similar nodes")
+    return msgs
 
 
 # Function to join objects using a geometry nodes group
 def join_selected_objects_with_geometry_nodes(**kwargs):
-    # Initiate logging
+    # Initiate results
     msgs = []
     
     # Retrieve the keyword argument for differentiating materials, default to True
@@ -949,7 +955,7 @@ def join_selected_objects_with_geometry_nodes(**kwargs):
     for obj in selected_objects:
         valid_mats = [m for m in obj.data.materials if m is not None]
         if len(valid_mats) > 1:
-            msgs.append(f"⚠ Warning: Object '{obj.name}' has multiple materials, which may cause unexpected behavior.")
+            msgs.append(f"Warning: Object '{obj.name}' has multiple materials, which may cause unexpected behavior.")
     
     # Dictionary to hold objects grouped by their materials
     material_objects_dict = {}
