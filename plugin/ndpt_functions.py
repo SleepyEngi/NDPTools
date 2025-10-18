@@ -909,7 +909,12 @@ def nodes_select_similar():
     msgs = []
     
     # get all node editor windows and the node groups open in them
-    nodegroups = [editor.spaces.active.edit_tree.nodes for editor in bpy.context.window_manager.windows[0].screen.areas if editor.type == 'NODE_EDITOR']
+    nodegroups = []
+    for area in bpy.context.window_manager.windows[0].screen.areas:
+        if area.type == 'NODE_EDITOR':
+            for space in area.spaces:
+                if hasattr(space, 'edit_tree') and space.edit_tree is not None:
+                    nodegroups.append(space.edit_tree.nodes)
     
     # iterate over every node group
     for nodegroup in nodegroups:

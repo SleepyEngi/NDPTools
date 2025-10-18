@@ -1,4 +1,4 @@
-# Addon information. Displays addon information on pre-extension blender versions. 
+# Addon information. Displays addon information on older blender versions. 
 bl_info = {
     "name" : "NDP Tools Addon",
     "description" : "Adds a set of buttons on the viewport for managing and cleaning up the scene, among other miscellaneous buttons.",
@@ -13,25 +13,23 @@ bl_info = {
     "category" : "3D View"
 }
 
-# For everything
+# Blender Python
 import bpy
 
-# For addon operators and panels
+# Operators & Panel
 from bpy.types import Operator, Panel
 
-
-
-# Functions & scripts file
+# Import functions
 from .plugin import ndpt_functions
 
 # Debug Logging
 #import logging
-# Only in dev
+
+
 
 # --------------------------------------------------------------------------------
-# Operators & Stuff
-# Adds the operations to the F3 menu. Later we assign them to a button on the panel.
-
+# Operators
+# Adds the operators, which we add then to the F3 menu
 
 # Toggle shape keys operator
 class NDPT_OT_ToggleShapeKeys(bpy.types.Operator):
@@ -395,6 +393,7 @@ class NDPT_OT_FindNodeParents(bpy.types.Operator):
         self.report({'INFO'}, f"Found {len(results) - 1} results.")
 
         return {'FINISHED'}
+
 
 
 # --------------------------------------------------------------------------------

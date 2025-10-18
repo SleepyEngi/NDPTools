@@ -5,7 +5,7 @@ id = "ndptools"
 
 version = "1.0.2"
 
-name = "NDPTools: General clean up tools"
+name = "NDPTools: Clean up tools"
 
 tagline = "Adds a panel with tools for cleaning up objects, data, nodes and more."
 
